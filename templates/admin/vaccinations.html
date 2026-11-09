@@ -1,0 +1,121 @@
+{% extends 'base_admin.html' %}
+{% block title %}All Vaccination Records – Admin{% endblock %}
+{% block page_title %}Vaccination Administration Records{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Vaccinations</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header Banner -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Immunization &amp; Vaccination Logs</h4>
+          <p class="text-secondary mb-0 small">Cross-farm vaccination schedules, completed injections/droplets, and overdue reminders ({{ vaccinations|length }} records)</p>
+        </div>
+
+        <!-- Filter Pill Buttons -->
+        <div class="d-flex gap-1 bg-light p-1 rounded-2 border">
+          <button class="btn btn-xs btn-outline-secondary active border-0 filter-btn" data-status="">All ({{ vaccinations|length }})</button>
+          <button class="btn btn-xs btn-outline-secondary border-0 filter-btn" data-status="Completed">Completed</button>
+          <button class="btn btn-xs btn-outline-secondary border-0 filter-btn" data-status="Upcoming">Upcoming</button>
+          <button class="btn btn-xs btn-outline-secondary border-0 filter-btn" data-status="Missed">Missed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vaccinations Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if vaccinations %}
+      <div class="table-responsive">
+        <table class="table mb-0" id="vaccTable">
+          <thead>
+            <tr>
+              <th>Vaccine Formulation</th>
+              <th>Target Flock Batch</th>
+              <th>Facility / Producer</th>
+              <th>Administered Date</th>
+              <th>Next Due Date</th>
+              <th>Administration Route</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in vaccinations %}
+            <tr data-status="{{ v.status }}">
+              <td>
+                <div class="fw-semibold">{{ v.vaccine_name }}</div>
+                {% if v.dosage %}
+                  <div class="text-muted" style="font-size: 0.74rem;">Dose: {{ v.dosage }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="fw-semibold">{{ v.batch.batch_name if v.batch else '—' }}</span>
+              </td>
+              <td>
+                <div class="fw-medium">{{ v.batch.farm.farm_name if v.batch and v.batch.farm else '—' }}</div>
+                <div class="text-secondary" style="font-size: 0.74rem;">{{ v.farmer.full_name if v.farmer else '' }}</div>
+              </td>
+              <td class="text-secondary text-nowrap" style="font-size: 0.82rem;">
+                {{ v.vaccination_date.strftime('%d %b %Y') if v.vaccination_date else '—' }}
+              </td>
+              <td class="text-nowrap" style="font-size: 0.82rem;">
+                {% if v.next_vaccination_date %}
+                  <span class="text-secondary">{{ v.next_vaccination_date.strftime('%d %b %Y') }}</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ v.route or 'Drinking water' }}</span>
+              </td>
+              <td>
+                {% if v.status == 'Completed' %}
+                  <span class="badge-soft-success"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                {% elif v.status == 'Upcoming' %}
+                  <span class="badge-soft-info"><i class="bi bi-calendar3"></i> Scheduled</span>
+                {% else %}
+                  <span class="badge-soft-danger"><i class="bi bi-exclamation-octagon-fill"></i> Missed</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-shield-check"></i></div>
+        <div class="empty-state-title">No Vaccination Records Logged</div>
+        <p class="empty-state-text">Vaccine administration logs recorded across all farms will populate here.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('active', 'bg-white', 'shadow-xs');
+    });
+    this.classList.add('active', 'bg-white', 'shadow-xs');
+    const status = this.dataset.status;
+    document.querySelectorAll('#vaccTable tbody tr').forEach(row => {
+      if (!status || row.dataset.status === status) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

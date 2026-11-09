@@ -1,0 +1,208 @@
+{
+  "trained_at": "2026-11-09T16:10:39.452070",
+  "dataset": {
+    "source": "Synthetic dataset based on FAO/Merck veterinary references",
+    "total_samples": 3000,
+    "train_samples": 2400,
+    "test_samples": 600,
+    "classes": [
+      "Avian Influenza",
+      "Coccidiosis",
+      "Fowl Cholera",
+      "Healthy",
+      "Infectious Bronchitis",
+      "Infectious Bursal Disease",
+      "Marek's Disease",
+      "Newcastle Disease"
+    ],
+    "features": [
+      "bird_age_weeks",
+      "body_temperature",
+      "feed_consumption_kg",
+      "water_consumption_litres",
+      "bird_weight_kg",
+      "mortality_count",
+      "mortality_rate",
+      "temp_above_42",
+      "low_feed",
+      "poultry_type_encoded"
+    ]
+  },
+  "disclaimer": "This model was trained on a SYNTHETIC dataset for demonstration purposes. Results are NOT clinical diagnoses. Always consult a veterinarian.",
+  "xgboost": {
+    "accuracy": 0.88,
+    "precision": 0.8793,
+    "recall": 0.88,
+    "f1_score": 0.8784,
+    "confusion_matrix": [
+      [
+        55,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        65,
+        0,
+        2,
+        3,
+        8,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        27,
+        0,
+        1,
+        1,
+        0,
+        15
+      ],
+      [
+        0,
+        0,
+        0,
+        148,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        1,
+        36,
+        3,
+        3,
+        0
+      ],
+      [
+        0,
+        16,
+        0,
+        0,
+        0,
+        57,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        55,
+        0
+      ],
+      [
+        2,
+        0,
+        6,
+        0,
+        0,
+        1,
+        0,
+        85
+      ]
+    ]
+  },
+  "decision_tree": {
+    "accuracy": 0.7983,
+    "precision": 0.8066,
+    "recall": 0.7983,
+    "f1_score": 0.8003,
+    "confusion_matrix": [
+      [
+        49,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        5
+      ],
+      [
+        0,
+        56,
+        0,
+        0,
+        7,
+        15,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        28,
+        0,
+        1,
+        1,
+        0,
+        14
+      ],
+      [
+        0,
+        0,
+        0,
+        143,
+        3,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        40,
+        2,
+        2,
+        0
+      ],
+      [
+        0,
+        20,
+        0,
+        0,
+        2,
+        49,
+        0,
+        2
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        8,
+        0,
+        50,
+        0
+      ],
+      [
+        10,
+        0,
+        20,
+        0,
+        0,
+        0,
+        0,
+        64
+      ]
+    ]
+  }
+}

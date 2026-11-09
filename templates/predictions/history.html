@@ -1,0 +1,119 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Disease Prediction History{% endblock %}
+{% block page_title %}AI Disease Screening History{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">AI Predictions</li>
+{% endblock %}
+
+{% block content %}
+<!-- Model Health Status Banner -->
+{% if models_ready and metrics %}
+<div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-4 rounded-3 border-0 shadow-sm" style="background-color: var(--accent-green); color: var(--primary-green);">
+  <div class="d-flex align-items-center gap-2">
+    <i class="bi bi-shield-check fs-5"></i>
+    <div>
+      <span class="fw-bold">Dual AI Diagnostic Models Active</span>
+      {% if metrics.xgboost and metrics.decision_tree %}
+      <span class="d-none d-md-inline ms-2 text-dark small">
+        &bull; XGBoost Accuracy: <strong>{{ '%.1f'|format(metrics.xgboost.accuracy * 100) }}%</strong>
+        &bull; Decision Tree Accuracy: <strong>{{ '%.1f'|format(metrics.decision_tree.accuracy * 100) }}%</strong>
+      </span>
+      {% endif %}
+    </div>
+  </div>
+  {% if metrics.trained_at %}
+  <span class="text-secondary small d-none d-lg-inline">Trained: {{ metrics.trained_at[:10] }}</span>
+  {% endif %}
+</div>
+{% elif not models_ready %}
+<div class="alert alert-warning d-flex align-items-start gap-2 p-3 mb-4 rounded-3 border-0 shadow-sm">
+  <i class="bi bi-exclamation-triangle fs-5 text-warning"></i>
+  <div>
+    <span class="fw-bold text-dark">AI Diagnostic Engines Not Initialized</span>
+    <p class="mb-0 small text-secondary">Execute <code>python ml_models/train_models.py</code> in the application terminal to initialize the pre-trained weights for XGBoost and Decision Tree models.</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+  <div>
+    <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">AI Screening Records</h2>
+    <p class="text-secondary small mb-0">Historical disease classification analyses and veterinary risk assessments.</p>
+  </div>
+  <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-primary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-cpu"></i>
+    <span>New Screening Test</span>
+  </a>
+</div>
+
+<div class="saas-card">
+  <div class="card-body p-0">
+    {% if predictions %}
+    <div class="table-responsive">
+      <table class="table-saas mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Batch Cohort</th>
+            <th>XGBoost Diagnosis</th>
+            <th>XGB Conf</th>
+            <th>Decision Tree</th>
+            <th>DT Conf</th>
+            <th>Consensus Result</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions %}
+          <tr>
+            <td class="fw-semibold" style="color: var(--text-main);">{{ p.prediction_date.strftime('%d %b %Y') if p.prediction_date else '—' }}</td>
+            <td>
+              <a href="{{ url_for('batch.view_batch', batch_id=p.batch_id) if p.batch_id else '#' }}" class="text-decoration-none fw-semibold" style="color: var(--text-main);">
+                {{ p.batch.batch_name if p.batch else '—' }}
+              </a>
+            </td>
+            <td class="text-secondary small">{{ p.xgboost_prediction or '—' }}</td>
+            <td>
+              {% if p.xgboost_confidence %}
+              <span class="badge-soft-info">{{ '%.1f'|format(p.xgboost_confidence) }}%</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-secondary small">{{ p.decision_tree_prediction or '—' }}</td>
+            <td>
+              {% if p.decision_tree_confidence %}
+              <span class="badge-soft-info">{{ '%.1f'|format(p.decision_tree_confidence) }}%</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if p.final_prediction == 'Healthy' %}
+              <span class="badge-soft-success">Healthy Flock</span>
+              {% else %}
+              <span class="badge-soft-warning">{{ p.final_prediction or 'Inconclusive' }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('prediction.view_prediction', pred_id=p.id) }}" class="btn btn-sm btn-light border d-inline-flex align-items-center gap-1">
+                <i class="bi bi-eye"></i> View Report
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 px-4">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: var(--accent-green); color: var(--primary-green);">
+        <i class="bi bi-cpu fs-3"></i>
+      </div>
+      <h5 class="fw-bold mb-1" style="color: var(--text-main);">No Disease Screenings Yet</h5>
+      <p class="text-secondary small mb-3">Submit biometric flock parameters to run AI diagnostic predictions against clinical disease profiles.</p>
+      <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Run First Screening
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Prediction Result – {{ result.final_prediction }}{% endblock %}
+{% block page_title %}Disease Diagnostic Report{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('prediction.prediction_history') }}">AI Predictions</a></li>
+<li class="breadcrumb-item active">Diagnostic Report</li>
+{% endblock %}
+
+{% block content %}
+{% set is_healthy = result.final_prediction == 'Healthy' %}
+
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+      <div>
+        <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">Diagnostic Screening Report</h2>
+        <p class="text-secondary small mb-0">
+          Evaluated on {{ prediction.prediction_date.strftime('%d %B %Y, %H:%M') if prediction.prediction_date else '—' }}
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-light border btn-sm d-inline-flex align-items-center gap-1" onclick="window.print()">
+          <i class="bi bi-printer"></i>
+          <span>Print Report</span>
+        </button>
+        <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1">
+          <i class="bi bi-plus-lg"></i>
+          <span>New Screening</span>
+        </a>
+        <a href="{{ url_for('prediction.prediction_history') }}" class="btn btn-light border btn-sm">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Batch Context Bar -->
+    <div class="saas-card mb-4">
+      <div class="card-body py-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-secondary small">Batch Cohort:</span>
+          <strong class="text-dark">{{ batch.batch_name if batch else '—' }}</strong>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-secondary small">Breed / Type:</span>
+          <strong class="text-dark">{{ batch.breed_name if batch else '—' }} ({{ batch.poultry_type if batch else '—' }})</strong>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-secondary small">Flock Size:</span>
+          <strong class="text-dark">{{ batch.number_of_birds if batch else '—' }} birds</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consensus Diagnostic Result Banner -->
+    <div class="saas-card mb-4 text-center py-5 px-4"
+         style="background-color: {% if is_healthy %}var(--accent-green){% else %}#FEF2F2{% endif %}; border: 1px solid {% if is_healthy %}#BBF7D0{% else %}#FECACA{% endif %};">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+           style="width: 64px; height: 64px; background-color: {% if is_healthy %}#DCFCE7{% else %}#FEE2E2{% endif %}; color: {% if is_healthy %}var(--primary-green){% else %}#DC2626{% endif %};">
+        <i class="bi {% if is_healthy %}bi-shield-check{% else %}bi-exclamation-triangle{% endif %} fs-2"></i>
+      </div>
+      <h3 class="fw-bold mb-1" style="color: {% if is_healthy %}var(--primary-green){% else %}#991B1B{% endif %};">
+        {{ result.final_prediction or 'Inconclusive Result' }}
+      </h3>
+      <p class="small mb-0 mx-auto" style="color: {% if is_healthy %}var(--primary-green){% else %}#B91C1C{% endif %}; max-width: 500px;">
+        {% if is_healthy %}
+        Ensemble AI screening detected no severe pathogenic indicators in the recorded vital parameters.
+        {% else %}
+        High-probability symptom and vital indicator match detected. Implement biosecurity protocol immediately.
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Dual ML Model Comparative Breakdown -->
+    <div class="row g-4 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="saas-card h-100">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <span class="text-secondary small text-uppercase fw-bold" style="letter-spacing: 0.5px;">Model A: Gradient Boosting</span>
+              <span class="badge-soft-info">XGBoost</span>
+            </div>
+            <h5 class="fw-bold mb-2" style="color: var(--text-main);">{{ result.xgboost_prediction or '—' }}</h5>
+            {% if result.xgboost_confidence %}
+            <div class="d-flex align-items-center justify-content-between small text-secondary mb-2">
+              <span>Model Confidence:</span>
+              <strong class="text-dark">{{ '%.1f'|format(result.xgboost_confidence) }}%</strong>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar" style="width: {{ result.xgboost_confidence }}%; background-color: var(--primary-green);"></div>
+            </div>
+            {% else %}
+            <span class="text-secondary small">Confidence score not available</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="saas-card h-100">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <span class="text-secondary small text-uppercase fw-bold" style="letter-spacing: 0.5px;">Model B: Decision Trees</span>
+              <span class="badge-soft-info">Decision Tree</span>
+            </div>
+            <h5 class="fw-bold mb-2" style="color: var(--text-main);">{{ result.decision_tree_prediction or '—' }}</h5>
+            {% if result.decision_tree_confidence %}
+            <div class="d-flex align-items-center justify-content-between small text-secondary mb-2">
+              <span>Model Confidence:</span>
+              <strong class="text-dark">{{ '%.1f'|format(result.decision_tree_confidence) }}%</strong>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar" style="width: {{ result.decision_tree_confidence }}%; background-color: #0284C7;"></div>
+            </div>
+            {% else %}
+            <span class="text-secondary small">Confidence score not available</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consensus Analysis -->
+    <div class="mb-4">
+      {% if result.agreement %}
+      <div class="alert alert-success d-flex align-items-center gap-2 p-3 rounded-3 border-0" style="background-color: var(--accent-green); color: var(--primary-green);">
+        <i class="bi bi-check-circle-fill fs-5"></i>
+        <span class="small"><strong>Dual Engine Consensus Reached:</strong> Both XGBoost and Decision Tree models independently classified the clinical pattern as <strong>{{ result.final_prediction }}</strong>.</span>
+      </div>
+      {% else %}
+      <div class="alert alert-warning d-flex align-items-center gap-2 p-3 rounded-3 border-0">
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+        <span class="small"><strong>Model Variance Detected:</strong> XGBoost classified as <em>{{ result.xgboost_prediction }}</em> while Decision Tree predicted <em>{{ result.decision_tree_prediction }}</em>. Physical veterinary examination recommended.</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Prevention & Biosecurity Advisory -->
+    {% if recommendations %}
+    <div class="saas-card mb-4">
+      <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-shield-plus text-success fs-5"></i>
+          <h6 class="fw-bold mb-0" style="color: var(--text-main);">Pathology Profile &amp; Biosecurity Recommendations: {{ recommendations.disease_name }}</h6>
+        </div>
+        {% if not recommendations.found_in_db %}
+        <span class="badge-soft-warning">General Advisory</span>
+        {% endif %}
+      </div>
+      <div class="card-body p-4">
+        {% if recommendations.description %}
+        <div class="mb-4">
+          <h6 class="text-secondary text-uppercase" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">Disease Overview</h6>
+          <p class="text-dark small mb-0">{{ recommendations.description }}</p>
+        </div>
+        {% endif %}
+
+        <div class="row g-3">
+          {% if recommendations.symptoms %}
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background-color: var(--bg-main); border-left: 3px solid var(--primary-green);">
+              <span class="fw-bold small d-block mb-1" style="color: var(--text-main);"><i class="bi bi-activity me-1 text-success"></i> Common Pathological Signs</span>
+              <p class="small text-secondary mb-0">{{ recommendations.symptoms }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if recommendations.prevention %}
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background-color: var(--bg-main); border-left: 3px solid #22A06B;">
+              <span class="fw-bold small d-block mb-1" style="color: var(--text-main);"><i class="bi bi-shield-check me-1 text-success"></i> Preventative Controls</span>
+              <p class="small text-secondary mb-0">{{ recommendations.prevention }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if recommendations.hygiene_recommendations %}
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background-color: var(--bg-main); border-left: 3px solid #0284C7;">
+              <span class="fw-bold small d-block mb-1" style="color: var(--text-main);"><i class="bi bi-droplet me-1 text-info"></i> Sanitation &amp; Hygiene</span>
+              <p class="small text-secondary mb-0">{{ recommendations.hygiene_recommendations }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if recommendations.biosecurity_measures %}
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background-color: var(--bg-main); border-left: 3px solid #D97706;">
+              <span class="fw-bold small d-block mb-1" style="color: var(--text-main);"><i class="bi bi-lock me-1 text-warning"></i> Biosecurity Containment</span>
+              <p class="small text-secondary mb-0">{{ recommendations.biosecurity_measures }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if recommendations.isolation_guidance %}
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded-3 h-100" style="background-color: #FEF2F2; border-left: 3px solid #DC2626;">
+              <span class="fw-bold small d-block mb-1 text-danger"><i class="bi bi-exclamation-octagon me-1"></i> Quarantine Protocols</span>
+              <p class="small text-secondary mb-0">{{ recommendations.isolation_guidance }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if recommendations.veterinary_advice %}
+          <div class="col-12">
+            <div class="p-3 rounded-3" style="background-color: #FFFBEB; border: 1px solid #FDE68A;">
+              <span class="fw-bold small d-block mb-1" style="color: #92400E;"><i class="bi bi-heart-pulse me-1"></i> Clinical Veterinary Advisory</span>
+              <p class="small mb-0" style="color: #78350F;">{{ recommendations.veterinary_advice }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Legal Disclaimer -->
+    <div class="p-3 rounded-3 mb-4 d-flex align-items-start gap-2" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+      <i class="bi bi-info-circle text-secondary fs-5 flex-shrink-0 mt-1"></i>
+      <div class="small text-secondary">
+        <strong>Veterinary Disclaimer:</strong> This automated assessment is generated by machine learning predictive models trained on biometric indicators. It is intended for early alert monitoring only and does not constitute a definitive laboratory or clinical veterinary diagnosis.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

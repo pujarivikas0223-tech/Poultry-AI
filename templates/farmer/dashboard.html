@@ -1,0 +1,454 @@
+{% extends 'base_farmer.html' %}
+
+{% block title %}Producer Dashboard{% endblock %}
+{% block page_title %}Farmer Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper d-flex flex-column gap-4">
+
+  <!-- ── Greeting Header ── -->
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div>
+      <h2 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.45rem; letter-spacing: -0.02em;">
+        Good morning, {{ current_user.full_name or 'Producer' }}
+      </h2>
+      <p class="text-secondary mb-0" style="font-size: 0.88rem;">
+        Welcome to your farm operations, disease prevention, and immunization dashboard.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('health.add_record') }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-plus-circle"></i> Log Health
+      </a>
+      <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-sm btn-primary">
+        <i class="bi bi-cpu"></i> Run AI Screening
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Missed Vaccinations Alert Banner (if any) ── -->
+  {% if missed_vaccinations and missed_vaccinations > 0 %}
+  <div class="alert alert-warning alert-dismissible fade show shadow-xs" role="alert">
+    <i class="bi bi-exclamation-octagon-fill fs-5 text-warning flex-shrink-0"></i>
+    <div class="flex-grow-1">
+      <strong>Attention Needed:</strong> You have <strong>{{ missed_vaccinations }}</strong> overdue or missed vaccination dose(s). Please review your schedule and update records.
+    </div>
+    <a href="{{ url_for('vaccination.list_vaccinations') }}" class="btn btn-sm btn-outline-warning ms-3">
+      Review Schedule
+    </a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
+  <!-- ── Summary Statistics Grid (6 Cards) ── -->
+  <div class="row g-3">
+
+    <!-- My Farms -->
+    <div class="col-12 col-sm-6 col-xl-2">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">My Farms</span>
+          <div class="stat-card-icon icon-green"><i class="bi bi-geo-alt"></i></div>
+        </div>
+        <div class="stat-card-value">{{ total_farms }}</div>
+        <div class="stat-card-footer">
+          <a href="{{ url_for('farm.list_farms') }}" class="stat-card-link">View farms <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Batches -->
+    <div class="col-12 col-sm-6 col-xl-2">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Batches</span>
+          <div class="stat-card-icon icon-amber"><i class="bi bi-layers"></i></div>
+        </div>
+        <div class="stat-card-value">{{ total_batches }}</div>
+        <div class="stat-card-footer">
+          <a href="{{ url_for('batch.list_batches') }}" class="stat-card-link">View flocks <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Birds -->
+    <div class="col-12 col-sm-6 col-xl-2">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Total Birds</span>
+          <div class="stat-card-icon icon-blue"><i class="bi bi-feather"></i></div>
+        </div>
+        <div class="stat-card-value">{{ total_birds | default(0) | format_number }}</div>
+        <div class="stat-card-footer">
+          <span class="badge-soft-success">Live flock</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Logs -->
+    <div class="col-12 col-sm-6 col-xl-2">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Health Logs</span>
+          <div class="stat-card-icon icon-teal"><i class="bi bi-activity"></i></div>
+        </div>
+        <div class="stat-card-value">{{ total_health_records }}</div>
+        <div class="stat-card-footer">
+          <a href="{{ url_for('health.list_records') }}" class="stat-card-link">View logs <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Screenings -->
+    <div class="col-12 col-sm-6 col-xl-2">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">AI Screenings</span>
+          <div class="stat-card-icon icon-purple"><i class="bi bi-cpu"></i></div>
+        </div>
+        <div class="stat-card-value">{{ total_predictions }}</div>
+        <div class="stat-card-footer">
+          <a href="{{ url_for('prediction.prediction_history') }}" class="stat-card-link">History <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Vaccinations -->
+    <div class="col-12 col-sm-6 col-xl-2">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Vaccinations</span>
+          <div class="stat-card-icon icon-rose"><i class="bi bi-shield-check"></i></div>
+        </div>
+        <div class="stat-card-value">{{ upcoming_vaccinations|length }}</div>
+        <div class="stat-card-footer">
+          <a href="{{ url_for('vaccination.list_vaccinations') }}" class="stat-card-link">Schedule <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Operations Quick Launch Bar ── -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span class="text-secondary fw-semibold small text-uppercase" style="letter-spacing: 0.05em;">
+          <i class="bi bi-lightning-charge me-1 text-primary"></i> Quick Actions:
+        </span>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ url_for('farm.add_farm') }}" class="btn btn-xs btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> Add Farm
+          </a>
+          <a href="{{ url_for('batch.add_batch') }}" class="btn btn-xs btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> New Batch
+          </a>
+          <a href="{{ url_for('health.add_record') }}" class="btn btn-xs btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> Record Health
+          </a>
+          <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-xs btn-outline-secondary">
+            <i class="bi bi-cpu"></i> AI Predict
+          </a>
+          <a href="{{ url_for('vaccination.add_vaccination') }}" class="btn btn-xs btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> Schedule Vaccine
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Middle Row: My Farms & Flocks ── -->
+  <div class="row g-4">
+
+    <!-- My Farms Overview -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-geo-alt"></i>
+            <span>My Poultry Farms</span>
+          </h3>
+          <a href="{{ url_for('farm.list_farms') }}" class="btn btn-xs btn-outline-secondary">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if farms %}
+            <div class="list-group list-group-flush">
+              {% for farm in farms[:4] %}
+                <div class="list-group-item d-flex align-items-center justify-content-between py-3 px-3">
+                  <div>
+                    <div class="fw-semibold text-dark">{{ farm.farm_name }}</div>
+                    <div class="text-muted small">
+                      <i class="bi bi-geo-alt me-1"></i>{{ farm.location or 'Location not specified' }}
+                      &nbsp;&bull;&nbsp;
+                      <span class="text-secondary">{{ farm.active_batches_count }} active batch(es)</span>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge-soft-success">{{ farm.total_birds }} birds</span>
+                    <a href="{{ url_for('farm.view_farm', farm_id=farm.id) }}" class="btn btn-xs btn-outline-primary">
+                      Manage
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state py-4">
+              <div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div>
+              <div class="empty-state-title">No Farms Added Yet</div>
+              <p class="empty-state-text">Start by setting up your first poultry farm facility.</p>
+              <a href="{{ url_for('farm.add_farm') }}" class="btn btn-sm btn-primary">Add Your First Farm</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Batches Overview -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-layers"></i>
+            <span>Active Flocks &amp; Cohorts</span>
+          </h3>
+          <a href="{{ url_for('batch.list_batches') }}" class="btn btn-xs btn-outline-secondary">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if batches %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Batch</th>
+                    <th>Breed</th>
+                    <th>Birds</th>
+                    <th>Age</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for b in batches[:4] %}
+                    <tr>
+                      <td class="fw-semibold">{{ b.batch_name }}</td>
+                      <td class="small text-secondary">{{ b.breed_name }}</td>
+                      <td class="fw-bold text-dark">{{ b.number_of_birds }}</td>
+                      <td><span class="badge-soft-info">{{ b.bird_age_weeks }}w</span></td>
+                      <td>
+                        <a href="{{ url_for('batch.view_batch', batch_id=b.id) }}" class="btn btn-xs btn-outline-primary">
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state py-4">
+              <div class="empty-state-icon"><i class="bi bi-layers"></i></div>
+              <div class="empty-state-title">No Batches Created</div>
+              <p class="empty-state-text">Add your chicks or layer cohorts to begin health tracking.</p>
+              <a href="{{ url_for('batch.add_batch') }}" class="btn btn-sm btn-primary">Create New Batch</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Bottom Row: AI Screening History & Health Condition Chart ── -->
+  <div class="row g-4">
+
+    <!-- Recent AI Predictions -->
+    <div class="col-12 col-xl-7">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-cpu"></i>
+            <span>Recent AI Disease Screenings</span>
+          </h3>
+          <a href="{{ url_for('prediction.prediction_history') }}" class="btn btn-xs btn-outline-secondary">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_predictions %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Batch</th>
+                    <th>Model Consensus</th>
+                    <th>Confidence</th>
+                    <th class="text-end">Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for pred in recent_predictions[:5] %}
+                    <tr>
+                      <td class="text-secondary text-nowrap small">
+                        {{ pred.prediction_date.strftime('%d %b %Y') if pred.prediction_date else '—' }}
+                      </td>
+                      <td class="fw-medium">{{ pred.batch.batch_name if pred.batch else '—' }}</td>
+                      <td>
+                        {% if pred.final_prediction == 'Healthy' %}
+                          <span class="badge-soft-success"><i class="bi bi-shield-check"></i> Healthy Flock</span>
+                        {% else %}
+                          <span class="badge-soft-warning"><i class="bi bi-exclamation-triangle"></i> {{ pred.final_prediction or 'Needs Attention' }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% set conf = pred.xgboost_confidence or pred.decision_tree_confidence %}
+                        {% if conf %}
+                          <span class="fw-semibold small">{{ '%.1f'|format(conf) }}%</span>
+                        {% else %}
+                          <span class="text-muted">—</span>
+                        {% endif %}
+                      </td>
+                      <td class="text-end">
+                        <a href="{{ url_for('prediction.view_prediction', pred_id=pred.id) }}" class="btn btn-xs btn-outline-primary">
+                          <i class="bi bi-eye"></i> Details
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state py-4">
+              <div class="empty-state-icon"><i class="bi bi-robot"></i></div>
+              <div class="empty-state-title">No AI Predictions Run</div>
+              <p class="empty-state-text">Check your flock's vital signs and run automated screening anytime.</p>
+              <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-sm btn-primary">
+                Run AI Screening
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Vitality Chart -->
+    <div class="col-12 col-xl-5">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-pie-chart"></i>
+            <span>Flock Vitality Breakdown</span>
+          </h3>
+          <span class="badge-soft-success">Clinical</span>
+        </div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <div style="position: relative; width: 100%; max-width: 260px; height: 230px;">
+            <canvas id="farmerHealthChart"></canvas>
+          </div>
+          <p class="text-muted text-center mt-3 mb-0" style="font-size: 0.78rem;">
+            Distribution of daily observations logged on your farms
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Scheduled Vaccinations Feed ── -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-header-title">
+        <i class="bi bi-calendar-check"></i>
+        <span>Upcoming Vaccination Deadlines</span>
+      </h3>
+      <a href="{{ url_for('vaccination.calendar_view') }}" class="btn btn-xs btn-outline-secondary">
+        Open Calendar View
+      </a>
+    </div>
+    <div class="card-body p-0">
+      {% if upcoming_vaccinations %}
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>Scheduled Date</th>
+                <th>Vaccine Name</th>
+                <th>Target Batch</th>
+                <th>Dosage / Method</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in upcoming_vaccinations %}
+                <tr>
+                  <td class="text-nowrap small">
+                    <span class="badge-soft-info">
+                      <i class="bi bi-calendar-event"></i>
+                      {{ v.next_vaccination_date.strftime('%d %b %Y') if v.next_vaccination_date else '—' }}
+                    </span>
+                  </td>
+                  <td class="fw-semibold">{{ v.vaccine_name }}</td>
+                  <td class="text-secondary">{{ v.batch.batch_name if v.batch else '—' }}</td>
+                  <td>
+                    <span class="badge bg-light text-dark border">{{ v.dosage or 'Standard' }} ({{ v.route or 'Water' }})</span>
+                  </td>
+                  <td>
+                    <span class="badge-soft-info"><i class="bi bi-clock"></i> Upcoming</span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state py-4">
+          <div class="empty-state-icon"><i class="bi bi-shield-check"></i></div>
+          <div class="empty-state-title">No Upcoming Vaccinations Due</div>
+          <p class="empty-state-text">Your scheduled vaccines are up to date. Plan future dosages with the vaccine calendar.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  var healthRaw = {{ health_data | safe }};
+  var labels = Object.keys(healthRaw);
+  var values = Object.values(healthRaw);
+  var canvas = document.getElementById('farmerHealthChart');
+
+  if (labels.length > 0 && values.some(v => v > 0)) {
+    new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: ['#166534', '#22a06b', '#f59e0b', '#ef4444', '#0284c7'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11, family: 'Inter' } } }
+        },
+        cutout: '68%'
+      }
+    });
+  } else {
+    canvas.parentElement.innerHTML =
+      '<div class="text-center py-4 text-muted small"><i class="bi bi-info-circle me-1"></i>No health observations logged yet</div>';
+  }
+})();
+</script>
+{% endblock %}

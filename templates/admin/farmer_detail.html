@@ -1,0 +1,253 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ farmer.full_name }} – Producer Profile{% endblock %}
+{% block page_title %}Farmer Details{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.farmers_list') }}">Farmers</a></li>
+<li class="breadcrumb-item active">{{ farmer.full_name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Top Action Bar -->
+  <div class="d-flex align-items-center justify-content-between">
+    <a href="{{ url_for('admin.farmers_list') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Directory
+    </a>
+    <div class="d-flex gap-2">
+      <form method="POST" action="{{ url_for('admin.toggle_farmer', farmer_id=farmer.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-{{ 'pause-circle' if farmer.is_active else 'play-circle' }}"></i>
+          {{ 'Deactivate Account' if farmer.is_active else 'Activate Account' }}
+        </button>
+      </form>
+      <button type="button" class="btn btn-sm btn-outline-danger"
+              onclick="confirmDelete('{{ farmer.full_name }}','{{ url_for('admin.delete_farmer', farmer_id=farmer.id) }}')">
+        <i class="bi bi-trash"></i> Delete Producer
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Profile Card -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-body text-center py-4">
+          <div class="user-avatar-sm mx-auto mb-3" style="width: 64px; height: 64px; font-size: 1.6rem; background: #dcfce7; color: #166534; border-radius: 16px;">
+            {{ farmer.full_name[0].upper() }}
+          </div>
+          <h5 class="fw-bold mb-1" style="color: var(--text-main);">{{ farmer.full_name }}</h5>
+          <div class="mb-3">
+            {% if farmer.is_active %}
+              <span class="badge-soft-success"><i class="bi bi-check-circle-fill"></i> Active Producer</span>
+            {% else %}
+              <span class="badge-soft-warning"><i class="bi bi-dash-circle-fill"></i> Account Suspended</span>
+            {% endif %}
+          </div>
+
+          <div class="border-top pt-3 text-start d-flex flex-column gap-2" style="font-size: 0.85rem;">
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-secondary"><i class="bi bi-envelope me-2"></i>Email</span>
+              <span class="fw-medium text-truncate" style="max-width: 170px;">{{ farmer.email }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-secondary"><i class="bi bi-telephone me-2"></i>Phone</span>
+              <span class="fw-medium">{{ farmer.phone }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-secondary"><i class="bi bi-geo-alt me-2"></i>Address</span>
+              <span class="fw-medium text-end" style="max-width: 180px;">{{ farmer.address or 'Not specified' }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-secondary"><i class="bi bi-calendar3 me-2"></i>Joined</span>
+              <span class="fw-medium">{{ farmer.created_at.strftime('%d %b %Y') if farmer.created_at else '—' }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-secondary"><i class="bi bi-clock-history me-2"></i>Last Login</span>
+              <span class="fw-medium">{{ farmer.last_login.strftime('%d %b %Y, %I:%M %p') if farmer.last_login else 'Never' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Operations Summary -->
+    <div class="col-12 col-lg-8 d-flex flex-column gap-4">
+
+      <!-- Farms List -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-geo-alt"></i>
+            <span>Registered Farms ({{ farms|length }})</span>
+          </h3>
+        </div>
+        <div class="card-body p-0">
+          {% if farms %}
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Farm Name</th>
+                  <th>Location</th>
+                  <th>Active Batches</th>
+                  <th>Total Birds</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for farm in farms %}
+                <tr>
+                  <td class="fw-semibold">{{ farm.farm_name }}</td>
+                  <td class="text-secondary small">{{ farm.location or '—' }}</td>
+                  <td><span class="badge-soft-info">{{ farm.active_batches_count }}</span></td>
+                  <td class="fw-semibold">{{ farm.total_birds }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-title">No Farms Created</div>
+            <p class="empty-state-text">This farmer has not registered any poultry farm facilities yet.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Batches List -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-layers"></i>
+            <span>Flock Batches ({{ batches|length }})</span>
+          </h3>
+        </div>
+        <div class="card-body p-0">
+          {% if batches %}
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Batch Name</th>
+                  <th>Breed</th>
+                  <th>Type</th>
+                  <th>Birds</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for batch in batches %}
+                <tr>
+                  <td class="fw-semibold">{{ batch.batch_name }}</td>
+                  <td class="text-secondary small">{{ batch.breed_name }}</td>
+                  <td><span class="badge bg-light text-dark border">{{ batch.poultry_type }}</span></td>
+                  <td class="fw-semibold">{{ batch.number_of_birds }}</td>
+                  <td>
+                    {% if batch.batch_status == 'Active' %}
+                      <span class="badge-soft-success">Active</span>
+                    {% else %}
+                      <span class="badge-soft-warning">{{ batch.batch_status }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-title">No Batches Recorded</div>
+            <p class="empty-state-text">No poultry batches currently associated with this producer.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Predictions History -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-cpu"></i>
+            <span>Recent AI Disease Screenings ({{ predictions|length }})</span>
+          </h3>
+        </div>
+        <div class="card-body p-0">
+          {% if predictions %}
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Batch</th>
+                  <th>XGBoost</th>
+                  <th>Decision Tree</th>
+                  <th>Final Diagnosis</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in predictions %}
+                <tr>
+                  <td class="text-secondary small">{{ p.prediction_date.strftime('%d %b %Y') if p.prediction_date else '—' }}</td>
+                  <td class="fw-semibold">{{ p.batch.batch_name if p.batch else '—' }}</td>
+                  <td class="small text-secondary">{{ p.xgboost_prediction or '—' }}</td>
+                  <td class="small text-secondary">{{ p.decision_tree_prediction or '—' }}</td>
+                  <td>
+                    {% if p.final_prediction == 'Healthy' %}
+                      <span class="badge-soft-success">Healthy</span>
+                    {% else %}
+                      <span class="badge-soft-warning">{{ p.final_prediction }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state py-4">
+            <div class="empty-state-title">No Disease Screenings</div>
+            <p class="empty-state-text">No predictions run by this farmer yet.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Farmer</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small text-secondary py-3">
+        Are you sure you want to permanently delete <strong id="deleteTargetName" class="text-dark"></strong>? All records will be removed.
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-danger">Confirm Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(name, url) {
+  document.getElementById('deleteTargetName').textContent = name;
+  document.getElementById('deleteForm').action = url;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

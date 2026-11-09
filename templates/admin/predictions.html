@@ -1,0 +1,94 @@
+{% extends 'base_admin.html' %}
+{% block title %}AI Disease Screenings – Admin{% endblock %}
+{% block page_title %}AI Screenings &amp; Model Predictions{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">AI Predictions</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header Banner -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Automated Machine Learning Health Screenings</h4>
+          <p class="text-secondary mb-0 small">Audit dual-model predictions (XGBoost Classifier + Decision Tree) across all flocks ({{ predictions|length }} total logs)</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge-soft-purple"><i class="bi bi-cpu"></i> Dual Ensemble ML Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Predictions Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if predictions %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Producer</th>
+              <th>Cohort Batch</th>
+              <th>XGBoost Model</th>
+              <th>Decision Tree Model</th>
+              <th>Consensus Prediction</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in predictions %}
+            <tr>
+              <td class="text-secondary text-nowrap" style="font-size: 0.82rem;">
+                {{ p.prediction_date.strftime('%d %b %Y, %I:%M %p') if p.prediction_date else '—' }}
+              </td>
+              <td>
+                <div class="fw-semibold">{{ p.farmer.full_name if p.farmer else '—' }}</div>
+                <div class="text-muted" style="font-size: 0.74rem;">{{ p.farmer.phone if p.farmer else '' }}</div>
+              </td>
+              <td>
+                <span class="fw-semibold">{{ p.batch.batch_name if p.batch else '—' }}</span>
+              </td>
+              <td>
+                <div class="fw-medium">{{ p.xgboost_prediction or '—' }}</div>
+                {% if p.xgboost_confidence %}
+                  <div class="text-secondary" style="font-size: 0.74rem;">Confidence: {{ '%.1f'|format(p.xgboost_confidence) }}%</div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="fw-medium">{{ p.decision_tree_prediction or '—' }}</div>
+                {% if p.decision_tree_confidence %}
+                  <div class="text-secondary" style="font-size: 0.74rem;">Confidence: {{ '%.1f'|format(p.decision_tree_confidence) }}%</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if p.final_prediction == 'Healthy' %}
+                  <span class="badge-soft-success"><i class="bi bi-shield-check"></i> Healthy Flock</span>
+                {% else %}
+                  <span class="badge-soft-warning"><i class="bi bi-exclamation-triangle"></i> {{ p.final_prediction or '—' }}</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('prediction.view_prediction', pred_id=p.id) }}" class="btn btn-xs btn-outline-primary">
+                  <i class="bi bi-eye"></i> Details
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-cpu"></i></div>
+        <div class="empty-state-title">No Prediction Screenings Logged</div>
+        <p class="empty-state-text">When producers run machine learning screenings on their batches, full audit results will populate here.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

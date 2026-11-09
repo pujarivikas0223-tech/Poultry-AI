@@ -1,0 +1,107 @@
+{% extends 'base_admin.html' %}
+{% block title %}All Batches – Admin{% endblock %}
+{% block page_title %}Flock &amp; Batch Management{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Batches</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header & Filter Toolbar -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Poultry Flocks &amp; Batches</h4>
+          <p class="text-secondary mb-0 small">Tracking bird cohorts, age, breed lineage, and facility status ({{ batches|length }} total)</p>
+        </div>
+        <form method="GET" action="{{ url_for('admin.all_batches') }}" class="d-flex gap-2" style="max-width: 380px; width: 100%;">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by batch, breed or farm…">
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+          {% if q %}
+            <a href="{{ url_for('admin.all_batches') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batches Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if batches %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Batch Identifier</th>
+              <th>Breed &amp; Category</th>
+              <th>Facility / Owner</th>
+              <th>Population</th>
+              <th>Flock Age</th>
+              <th>Cohort Status</th>
+              <th>Arrival Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in batches %}
+            <tr>
+              <td class="text-secondary small">{{ loop.index }}</td>
+              <td>
+                <div class="fw-semibold">{{ b.batch_name }}</div>
+                <div class="text-muted" style="font-size: 0.74rem;">ID: #B-{{ b.id }}</div>
+              </td>
+              <td>
+                <div class="fw-medium">{{ b.breed_name }}</div>
+                <span class="badge bg-light text-dark border mt-1" style="font-size: 0.7rem;">{{ b.poultry_type }}</span>
+              </td>
+              <td>
+                <div class="fw-semibold text-truncate" style="max-width: 140px;">{{ b.farm.farm_name }}</div>
+                <div class="text-secondary" style="font-size: 0.75rem;">{{ b.farm.owner.full_name }}</div>
+              </td>
+              <td>
+                <span class="fw-bold" style="color: var(--primary);">{{ b.number_of_birds }}</span>
+                <span class="text-muted small">birds</span>
+              </td>
+              <td>
+                <span class="badge-soft-info">{{ b.bird_age_weeks }} week(s)</span>
+              </td>
+              <td>
+                {% if b.batch_status == 'Active' %}
+                  <span class="badge-soft-success"><i class="bi bi-check-circle-fill"></i> Active</span>
+                {% elif b.batch_status == 'Quarantined' %}
+                  <span class="badge-soft-danger"><i class="bi bi-shield-x"></i> Quarantined</span>
+                {% elif b.batch_status == 'Harvested' %}
+                  <span class="badge-soft-info">Harvested</span>
+                {% else %}
+                  <span class="badge-soft-warning">{{ b.batch_status }}</span>
+                {% endif %}
+              </td>
+              <td class="text-secondary text-nowrap" style="font-size: 0.82rem;">
+                {{ b.arrival_date.strftime('%d %b %Y') if b.arrival_date else '—' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-layers"></i></div>
+        <div class="empty-state-title">No Batches Found</div>
+        <p class="empty-state-text">
+          {% if q %}No poultry batches match your search query "{{ q }}".{% else %}No flock batches have been created in the system yet.{% endif %}
+        </p>
+        {% if q %}
+          <a href="{{ url_for('admin.all_batches') }}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Farmer Portal{% endblock %} – Poultry Management System</title>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Font Awesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Custom SaaS Stylesheet -->
+  <link rel="stylesheet" href="/static/css/main.css" />
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="farmer-layout">
+
+  <!-- ===================================================
+       SIDEBAR
+  =================================================== -->
+  <nav id="sidebar" class="sidebar">
+
+    <!-- Brand Header -->
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <i class="bi bi-feather"></i>
+      </div>
+      <div>
+        <div class="sidebar-brand-name">Poultry SaaS</div>
+        <div class="sidebar-brand-sub">Farmer Portal</div>
+      </div>
+    </div>
+
+    <!-- User Profile Badge -->
+    <div class="sidebar-user">
+      <div class="user-avatar-sm">
+        {% if current_user and current_user.full_name %}
+          {{ current_user.full_name[0].upper() }}
+        {% else %}
+          F
+        {% endif %}
+      </div>
+      <div style="overflow:hidden;">
+        <div class="sidebar-user-name" title="{{ current_user.full_name if current_user and current_user.full_name else 'Farmer' }}">
+          {{ current_user.full_name if current_user and current_user.full_name else 'Farmer' }}
+        </div>
+        <div class="sidebar-user-role">Poultry Farmer</div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="sidebar-nav">
+
+      <!-- Overview -->
+      <div class="sidebar-section-label">Overview</div>
+      <a href="{{ url_for('farmer.dashboard') }}"
+         class="sidebar-link {% if request.endpoint == 'farmer.dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- My Farm Operations -->
+      <div class="sidebar-section-label">Farm Operations</div>
+      <a href="{{ url_for('farm.list_farms') }}"
+         class="sidebar-link {% if request.endpoint and request.endpoint.startswith('farm.') %}active{% endif %}">
+        <i class="bi bi-geo-alt"></i>
+        <span>My Farms</span>
+      </a>
+      <a href="{{ url_for('batch.list_batches') }}"
+         class="sidebar-link {% if request.endpoint and request.endpoint.startswith('batch.') %}active{% endif %}">
+        <i class="bi bi-layers"></i>
+        <span>Batches &amp; Flocks</span>
+      </a>
+      <a href="{{ url_for('health.list_records') }}"
+         class="sidebar-link {% if request.endpoint and request.endpoint.startswith('health.') %}active{% endif %}">
+        <i class="bi bi-activity"></i>
+        <span>Health Records</span>
+      </a>
+
+      <!-- Intelligence & Vaccinations -->
+      <div class="sidebar-section-label">Health &amp; AI</div>
+      <a href="{{ url_for('prediction.prediction_history') }}"
+         class="sidebar-link {% if request.endpoint and request.endpoint.startswith('prediction.') %}active{% endif %}">
+        <i class="bi bi-cpu"></i>
+        <span>AI Disease Screening</span>
+      </a>
+      <a href="{{ url_for('vaccination.list_vaccinations') }}"
+         class="sidebar-link {% if request.endpoint and request.endpoint.startswith('vaccination.') and 'calendar' not in request.endpoint %}active{% endif %}">
+        <i class="bi bi-shield-check"></i>
+        <span>Vaccinations</span>
+      </a>
+      <a href="{{ url_for('vaccination.calendar_view') }}"
+         class="sidebar-link {% if request.endpoint == 'vaccination.calendar_view' %}active{% endif %}">
+        <i class="bi bi-calendar3"></i>
+        <span>Vaccine Calendar</span>
+      </a>
+
+      <!-- Analytics & Reports -->
+      <div class="sidebar-section-label">Reports</div>
+      <a href="{{ url_for('report.reports_home') }}"
+         class="sidebar-link {% if request.endpoint and request.endpoint.startswith('report.') %}active{% endif %}">
+        <i class="bi bi-bar-chart-line"></i>
+        <span>Reports &amp; Export</span>
+      </a>
+
+    </div>
+
+    <!-- Sidebar Footer / Logout -->
+    <div class="sidebar-footer">
+      <form method="POST" action="{{ url_for('auth.logout') }}" class="m-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-sidebar-logout w-100 d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Sign Out</span>
+        </button>
+      </form>
+    </div>
+
+  </nav>
+
+  <!-- ===================================================
+       MAIN LAYOUT
+  =================================================== -->
+  <div id="main-wrapper" class="main-wrapper">
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="header-title-area">
+        <!-- Mobile Sidebar Toggle -->
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggleBtn" onclick="toggleSidebar()" aria-label="Toggle navigation">
+          <i class="bi bi-list fs-5"></i>
+        </button>
+
+        <div>
+          <h1 class="page-heading">{% block page_title %}Dashboard{% endblock %}</h1>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Home</a></li>
+              {% block breadcrumb %}{% endblock %}
+            </ol>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Header Actions / User Pill -->
+      <div class="header-meta">
+        <div class="header-status-pill d-none d-sm-inline-flex">
+          <span class="status-dot"></span>
+          <span>Farm Active</span>
+        </div>
+
+        <div class="header-user-badge">
+          <div class="header-user-avatar">
+            {% if current_user and current_user.full_name %}
+              {{ current_user.full_name[0].upper() }}
+            {% else %}
+              F
+            {% endif %}
+          </div>
+          <span class="header-user-name d-none d-md-inline">
+            {{ current_user.full_name if current_user and current_user.full_name else 'Farmer' }}
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- FLASH NOTIFICATIONS -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="px-4 pt-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else (category if category in ['success','warning','info','danger'] else 'info') }} alert-dismissible fade show" role="alert">
+              <i class="bi bi-{{ 'check-circle' if category == 'success' else ('exclamation-triangle' if category == 'warning' else ('x-circle' if category in ['danger','error'] else 'info-circle')) }} fs-5"></i>
+              <div class="flex-grow-1">{{ message }}</div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- MAIN BODY CONTENT -->
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="py-3 px-4 text-center text-muted" style="font-size: 0.78rem; border-top: 1px solid var(--border-color); background: #ffffff;">
+      &copy; {{ 2026 }} Poultry Disease Prevention &amp; Vaccination Management Platform &middot; Farmer Edition
+    </footer>
+
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      const isOpen = sidebar.classList.contains('sidebar-open');
+      sidebar.classList.toggle('sidebar-open', !isOpen);
+      overlay.classList.toggle('active', !isOpen);
+    }
+
+    // Auto-dismiss alerts after 5s
+    document.querySelectorAll('.alert.fade.show').forEach(function(el) {
+      setTimeout(function() {
+        var bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+        if (bsAlert) bsAlert.close();
+      }, 5000);
+    });
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

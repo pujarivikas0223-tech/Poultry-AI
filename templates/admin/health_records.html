@@ -1,0 +1,112 @@
+{% extends 'base_admin.html' %}
+{% block title %}All Health Records – Admin{% endblock %}
+{% block page_title %}Flock Health Records{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Health Records</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header Banner -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Clinical &amp; Vitality Records</h4>
+          <p class="text-secondary mb-0 small">Comprehensive health monitoring observations recorded by producers ({{ records|length }} total logs)</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge-soft-success"><i class="bi bi-heart-pulse"></i> Vital Signs Logged</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Records Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if records %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Inspection Date</th>
+              <th>Facility / Batch</th>
+              <th>Flock Size</th>
+              <th>Age</th>
+              <th>Temp (°C)</th>
+              <th>Feed (kg)</th>
+              <th>Mortality</th>
+              <th>Mortality %</th>
+              <th>Clinical Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td class="text-secondary text-nowrap" style="font-size: 0.82rem;">
+                {{ r.record_date.strftime('%d %b %Y') if r.record_date else '—' }}
+              </td>
+              <td>
+                <div class="fw-semibold">{{ r.batch.batch_name if r.batch else '—' }}</div>
+                <div class="text-secondary small">{{ r.farm.farm_name if r.farm else '—' }}</div>
+              </td>
+              <td>
+                <span class="fw-semibold">{{ r.number_of_birds }}</span>
+              </td>
+              <td>
+                <span class="badge-soft-info">{{ r.bird_age_weeks }}w</span>
+              </td>
+              <td>
+                {% if r.body_temperature %}
+                  <span class="fw-medium {% if r.body_temperature > 42.0 %}text-danger{% else %}text-dark{% endif %}">
+                    {{ '%.1f'|format(r.body_temperature) }}°C
+                  </span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {{ '%.1f'|format(r.feed_consumption_kg) if r.feed_consumption_kg else '—' }}
+              </td>
+              <td>
+                {% if r.mortality_count and r.mortality_count > 0 %}
+                  <span class="text-danger fw-semibold">{{ r.mortality_count }}</span>
+                {% else %}
+                  <span class="text-success fw-medium">0</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r.mortality_rate and r.mortality_rate > 5 %}
+                  <span class="badge-soft-danger">{{ '%.1f'|format(r.mortality_rate) }}%</span>
+                {% elif r.mortality_rate and r.mortality_rate > 0 %}
+                  <span class="badge-soft-warning">{{ '%.1f'|format(r.mortality_rate) }}%</span>
+                {% else %}
+                  <span class="text-success small fw-medium">0.0%</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r.health_condition == 'Excellent' or r.health_condition == 'Good' %}
+                  <span class="badge-soft-success"><i class="bi bi-check-circle"></i> {{ r.health_condition }}</span>
+                {% elif r.health_condition == 'Fair' %}
+                  <span class="badge-soft-warning"><i class="bi bi-exclamation-circle"></i> {{ r.health_condition }}</span>
+                {% else %}
+                  <span class="badge-soft-danger"><i class="bi bi-x-circle"></i> {{ r.health_condition or 'Unknown' }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-heart-pulse"></i></div>
+        <div class="empty-state-title">No Health Records Available</div>
+        <p class="empty-state-text">No flock daily health parameters or clinical observations have been logged yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

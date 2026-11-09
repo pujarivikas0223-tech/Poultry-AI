@@ -1,0 +1,129 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Health Summary Report{% endblock %}
+{% block page_title %}Flock Vital Analytics Report{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('report.reports_home') }}">Reports</a></li>
+<li class="breadcrumb-item active">Health Summary</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+  <div>
+    <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">Clinical Vital Summary Report</h2>
+    <p class="text-secondary small mb-0">Comprehensive historical ledger of observations, biometrics, and mortality indices.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('report.export_health_csv') }}" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2">
+      <i class="bi bi-download"></i>
+      <span>Export CSV</span>
+    </a>
+    <a href="{{ url_for('report.reports_home') }}" class="btn btn-light border btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+  </div>
+</div>
+
+{% if records %}
+<!-- Summary Aggregate Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: var(--primary-green);">{{ records|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Total Observations</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: #DC2626;">{{ records|sum(attribute='mortality_count') }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Cumulative Mortality</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: #0284C7;">{{ records|selectattr('health_condition','in',['Excellent','Good'])|list|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Good / Optimal</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: #D97706;">{{ records|selectattr('health_condition','in',['Poor','Critical'])|list|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Poor / At Risk</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ledger Table -->
+<div class="saas-card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table-saas mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Farm Site</th>
+            <th>Batch Cohort</th>
+            <th>Birds</th>
+            <th>Age</th>
+            <th>Body Temp</th>
+            <th>Feed (kg)</th>
+            <th>Water (L)</th>
+            <th>Avg Wt</th>
+            <th>Mortality</th>
+            <th>Rate</th>
+            <th>Condition</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="fw-semibold" style="color: var(--text-main);">{{ r.record_date.strftime('%d %b %Y') if r.record_date else '—' }}</td>
+            <td class="text-secondary small">{{ r.farm.farm_name if r.farm else '—' }}</td>
+            <td class="text-secondary small">{{ r.batch.batch_name if r.batch else '—' }}</td>
+            <td class="text-secondary small">{{ r.number_of_birds }}</td>
+            <td class="text-secondary small">{{ r.bird_age_weeks }}w</td>
+            <td>
+              {% if r.body_temperature %}
+              <span class="badge {% if r.body_temperature > 42.0 %}badge-soft-danger{% elif r.body_temperature < 40.5 %}badge-soft-warning{% else %}badge-soft-success{% endif %}">
+                {{ '%.1f'|format(r.body_temperature) }} °C
+              </span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-secondary small">{{ r.feed_consumption_kg or '—' }}</td>
+            <td class="text-secondary small">{{ r.water_consumption_litres or '—' }}</td>
+            <td class="text-secondary small">{{ r.bird_weight_kg or '—' }} kg</td>
+            <td class="text-secondary small">{{ r.mortality_count }}</td>
+            <td>
+              <span class="badge {% if r.mortality_rate > 5 %}badge-soft-danger{% elif r.mortality_rate > 2 %}badge-soft-warning{% else %}badge-soft-success{% endif %}">
+                {{ '%.1f'|format(r.mortality_rate) }}%
+              </span>
+            </td>
+            <td>
+              {% if r.health_condition in ['Excellent', 'Good'] %}
+              <span class="badge-soft-success">{{ r.health_condition }}</span>
+              {% elif r.health_condition == 'Fair' %}
+              <span class="badge-soft-warning">{{ r.health_condition }}</span>
+              {% else %}
+              <span class="badge-soft-danger">{{ r.health_condition }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="saas-card text-center py-5 px-4">
+  <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: var(--accent-green); color: var(--primary-green);">
+    <i class="bi bi-activity fs-3"></i>
+  </div>
+  <h5 class="fw-bold mb-1" style="color: var(--text-main);">No Health Records Available</h5>
+  <p class="text-secondary small mb-3">Health records entered through daily monitoring will be compiled into this analytical ledger.</p>
+  <a href="{{ url_for('health.add_record') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i> Log First Health Record
+  </a>
+</div>
+{% endif %}
+{% endblock %}

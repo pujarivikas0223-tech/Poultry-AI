@@ -1,0 +1,117 @@
+{% extends 'base_farmer.html' %}
+{% block title %}{{ 'Edit Vaccination' if vacc else 'Log Vaccination' }}{% endblock %}
+{% block page_title %}{{ 'Edit Immunization' if vacc else 'Schedule Vaccination' }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('vaccination.list_vaccinations') }}">Vaccinations</a></li>
+<li class="breadcrumb-item active">{{ 'Edit' if vacc else 'Create' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8 col-xl-7">
+    <div class="saas-card">
+      <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 40px; height: 40px; background-color: var(--accent-green); color: var(--primary-green);">
+            <i class="bi bi-shield-plus fs-5"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">{{ 'Edit Immunization Record' if vacc else 'Log Vaccine Administration' }}</h5>
+            <p class="text-secondary small mb-0">Record prophylaxis, booster schedules, and batch serial identifiers</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('vaccination.edit_vaccination', vacc_id=vacc.id) if vacc else url_for('vaccination.add_vaccination') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Target Flock Batch <span class="text-danger">*</span></label>
+              <select name="batch_id" class="form-select" required>
+                <option value="">— Select Target Batch —</option>
+                {% for b in batches %}
+                <option value="{{ b.id }}" {% if vacc and vacc.batch_id == b.id %}selected{% endif %}>
+                  {{ b.batch_name }} – {{ b.farm.farm_name if b.farm else 'Unassigned' }} ({{ b.poultry_type }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Vaccine Name &amp; Strain <span class="text-danger">*</span></label>
+              <input type="text" name="vaccine_name" class="form-control"
+                     value="{{ vacc.vaccine_name if vacc else '' }}" required
+                     placeholder="e.g. Newcastle Disease (LaSota), Gumboro (IBD), Marek's">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Administration Date <span class="text-danger">*</span></label>
+              <input type="date" name="vaccination_date" class="form-control"
+                     value="{{ vacc.vaccination_date.strftime('%Y-%m-%d') if vacc and vacc.vaccination_date else today }}" required>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Next Due / Booster Date</label>
+              <input type="date" name="next_vaccination_date" class="form-control"
+                     value="{{ vacc.next_vaccination_date.strftime('%Y-%m-%d') if vacc and vacc.next_vaccination_date else '' }}">
+              <div class="form-text text-muted" style="font-size: 0.7rem;">Auto-generates calendar deadline reminder</div>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Dosage per Bird</label>
+              <input type="text" name="dosage" class="form-control"
+                     value="{{ vacc.dosage if vacc else '' }}" placeholder="e.g. 0.5 ml or 1 drop">
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Route</label>
+              <select name="route" class="form-select">
+                {% for r in routes %}
+                <option value="{{ r }}" {% if vacc and vacc.route == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Status</label>
+              <select name="status" class="form-select">
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if vacc and vacc.status == s %}selected{% elif not vacc and s == 'Completed' %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Lot / Serial Number</label>
+              <input type="text" name="batch_lot_number" class="form-control"
+                     value="{{ vacc.batch_lot_number if vacc else '' }}" placeholder="e.g. LOT-2024-998">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Administering Specialist</label>
+              <input type="text" name="administered_by" class="form-control"
+                     value="{{ vacc.administered_by if vacc else '' }}" placeholder="Doctor or technician name">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Notes &amp; Post-Vaccine Observations</label>
+              <textarea name="notes" class="form-control" rows="3"
+                        placeholder="Adverse reactions, flock behavior post-dose, temperature condition of vaccine vial...">{{ vacc.notes if vacc else '' }}</textarea>
+            </div>
+
+            <div class="col-12 d-flex align-items-center gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+              <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-check-lg"></i>
+                <span>{{ 'Save Changes' if vacc else 'Save Record' }}</span>
+              </button>
+              <a href="{{ url_for('vaccination.list_vaccinations') }}" class="btn btn-light border">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Health Records{% endblock %}
+{% block page_title %}Flock Vital Records{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Health Records</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+  <div>
+    <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">Clinical Vital Records</h2>
+    <p class="text-secondary small mb-0">Monitor flock biometric measurements, body temperature, feed conversion, and mortality rates.</p>
+  </div>
+  <a href="{{ url_for('health.add_record') }}" class="btn btn-primary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-plus-lg"></i>
+    <span>Log Health Observation</span>
+  </a>
+</div>
+
+<div class="saas-card">
+  <div class="card-body p-0">
+    {% if records %}
+    <div class="table-responsive">
+      <table class="table-saas mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Batch Cohort</th>
+            <th>Farm Site</th>
+            <th>Headcount</th>
+            <th>Age</th>
+            <th>Body Temp</th>
+            <th>Mortality</th>
+            <th>Rate</th>
+            <th>Flock Condition</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="fw-semibold" style="color: var(--text-main);">{{ r.record_date.strftime('%d %b %Y') if r.record_date else '—' }}</td>
+            <td>
+              <a href="{{ url_for('batch.view_batch', batch_id=r.batch_id) if r.batch_id else '#' }}" class="fw-bold text-decoration-none" style="color: var(--text-main);">
+                {{ r.batch.batch_name if r.batch else '—' }}
+              </a>
+            </td>
+            <td class="text-secondary small">{{ r.farm.farm_name if r.farm else '—' }}</td>
+            <td class="text-secondary small">{{ r.number_of_birds }}</td>
+            <td class="text-secondary small">{{ r.bird_age_weeks }} wks</td>
+            <td>
+              {% if r.body_temperature %}
+              <span class="badge {% if r.body_temperature > 42.0 %}badge-soft-danger{% elif r.body_temperature < 40.5 %}badge-soft-warning{% else %}badge-soft-success{% endif %}">
+                {{ '%.1f'|format(r.body_temperature) }} °C
+              </span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-secondary small">{{ r.mortality_count }}</td>
+            <td>
+              <span class="badge {% if r.mortality_rate > 5 %}badge-soft-danger{% elif r.mortality_rate > 2 %}badge-soft-warning{% else %}badge-soft-success{% endif %}">
+                {{ '%.1f'|format(r.mortality_rate) }}%
+              </span>
+            </td>
+            <td>
+              {% if r.health_condition in ['Excellent', 'Good'] %}
+              <span class="badge-soft-success">{{ r.health_condition }}</span>
+              {% elif r.health_condition == 'Fair' %}
+              <span class="badge-soft-warning">{{ r.health_condition }}</span>
+              {% else %}
+              <span class="badge-soft-danger">{{ r.health_condition }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('health.view_record', record_id=r.id) }}" class="btn btn-sm btn-light border" title="View Observation">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('health.edit_record', record_id=r.id) }}" class="btn btn-sm btn-light border" title="Edit Observation">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-light border text-danger" title="Delete Observation"
+                        onclick="confirmDelete({{ r.id }}, '{{ url_for('health.delete_record', record_id=r.id) }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 px-4">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: var(--accent-green); color: var(--primary-green);">
+        <i class="bi bi-activity fs-3"></i>
+      </div>
+      <h5 class="fw-bold mb-1" style="color: var(--text-main);">No Health Observations Recorded</h5>
+      <p class="text-secondary small mb-3">Begin logging daily biometric observations to unlock AI disease risk scoring and mortality alerts.</p>
+      <a href="{{ url_for('health.add_record') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Log First Health Entry
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="delModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body p-4 text-center">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 52px; height: 52px; background-color: #FEE2E2; color: #DC2626;">
+          <i class="bi bi-exclamation-triangle fs-4"></i>
+        </div>
+        <h5 class="fw-bold mb-2" style="color: var(--text-main);">Delete Health Observation</h5>
+        <p class="text-secondary small mb-4">
+          Are you sure you want to delete this clinical record? This action cannot be reversed.
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <form id="delForm" method="POST" class="d-inline m-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger px-4">Delete Record</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(id, url) {
+  document.getElementById('delForm').action = url;
+  new bootstrap.Modal(document.getElementById('delModal')).show();
+}
+</script>
+{% endblock %}

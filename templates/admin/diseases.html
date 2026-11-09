@@ -1,0 +1,124 @@
+{% extends 'base_admin.html' %}
+{% block title %}Disease Reference Knowledgebase – Admin{% endblock %}
+{% block page_title %}Disease Directory{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Diseases</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header Banner -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Poultry Pathology &amp; Reference Knowledgebase</h4>
+          <p class="text-secondary mb-0 small">Configured diseases, clinical symptoms, biosecurity protocols, and veterinary guidelines ({{ diseases|length }} total)</p>
+        </div>
+        <a href="{{ url_for('admin.add_disease') }}" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus-lg"></i> Add Disease Entry
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disease Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if diseases %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Pathogen / Disease</th>
+              <th>Risk Severity</th>
+              <th>Clinical Overview</th>
+              <th>Key Prevention</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in diseases %}
+            <tr>
+              <td class="text-secondary small">{{ loop.index }}</td>
+              <td>
+                <div class="fw-semibold">{{ d.name }}</div>
+              </td>
+              <td>
+                {% if d.severity == 'Critical' %}
+                  <span class="badge-soft-danger"><i class="bi bi-radioactive"></i> Critical</span>
+                {% elif d.severity == 'High' %}
+                  <span class="badge-soft-warning"><i class="bi bi-exclamation-triangle"></i> High Risk</span>
+                {% elif d.severity == 'Medium' %}
+                  <span class="badge-soft-info"><i class="bi bi-info-circle"></i> Moderate</span>
+                {% else %}
+                  <span class="badge-soft-success">Low Risk</span>
+                {% endif %}
+              </td>
+              <td class="small text-secondary" style="max-width: 320px;">
+                {{ d.description[:110] ~ '…' if d.description and d.description|length > 110 else (d.description or '—') }}
+              </td>
+              <td class="small text-secondary" style="max-width: 250px;">
+                {{ d.prevention[:80] ~ '…' if d.prevention and d.prevention|length > 80 else (d.prevention or '—') }}
+              </td>
+              <td class="text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                  <a href="{{ url_for('admin.edit_disease', disease_id=d.id) }}" class="btn btn-xs btn-outline-primary" title="Edit Guidelines">
+                    <i class="bi bi-pencil"></i> Edit
+                  </a>
+                  <button type="button" class="btn btn-xs btn-outline-danger" title="Delete Disease"
+                          onclick="confirmDelete('{{ d.name }}','{{ url_for('admin.delete_disease', disease_id=d.id) }}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-shield-exclamation"></i></div>
+        <div class="empty-state-title">No Disease Knowledgebase Entries</div>
+        <p class="empty-state-text">Seed or add veterinary clinical disease profiles to power AI recommendation guidance.</p>
+        <a href="{{ url_for('admin.add_disease') }}" class="btn btn-sm btn-primary">Add First Disease Entry</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Disease</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small text-secondary py-3">
+        Are you sure you want to remove the disease entry for <strong id="deleteTargetName" class="text-dark"></strong>?
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-danger">Confirm Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(name, url) {
+  document.getElementById('deleteTargetName').textContent = name;
+  document.getElementById('deleteForm').action = url;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

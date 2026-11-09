@@ -1,0 +1,99 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Disease Prediction Report{% endblock %}
+{% block page_title %}AI Screening Audit Report{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('report.reports_home') }}">Reports</a></li>
+<li class="breadcrumb-item active">Prediction Report</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+  <div>
+    <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">AI Disease Prediction Report</h2>
+    <p class="text-secondary small mb-0">Diagnostic screening history across cohorts with ensemble machine learning agreement rates.</p>
+  </div>
+  <a href="{{ url_for('report.reports_home') }}" class="btn btn-light border btn-sm d-inline-flex align-items-center gap-1">
+    <i class="bi bi-arrow-left"></i>
+    <span>Back to Reports</span>
+  </a>
+</div>
+
+{% if predictions %}
+<div class="saas-card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table-saas mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Batch Cohort</th>
+            <th>Age</th>
+            <th>Body Temp</th>
+            <th>Mortality</th>
+            <th>XGBoost</th>
+            <th>XGB Conf</th>
+            <th>Decision Tree</th>
+            <th>DT Conf</th>
+            <th>Consensus Result</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions %}
+          <tr>
+            <td class="fw-semibold" style="color: var(--text-main);">{{ p.prediction_date.strftime('%d %b %Y') if p.prediction_date else '—' }}</td>
+            <td class="text-secondary small">{{ p.batch.batch_name if p.batch else '—' }}</td>
+            <td class="text-secondary small">{{ p.bird_age_weeks or '—' }}w</td>
+            <td>
+              {% if p.body_temperature %}
+              <span class="badge {% if p.body_temperature > 42.0 %}badge-soft-danger{% elif p.body_temperature < 40.5 %}badge-soft-warning{% else %}badge-soft-success{% endif %}">
+                {{ '%.1f'|format(p.body_temperature) }} °C
+              </span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-secondary small">{{ p.mortality_count }}</td>
+            <td class="text-secondary small">{{ p.xgboost_prediction or '—' }}</td>
+            <td>
+              {% if p.xgboost_confidence %}
+              <span class="badge-soft-info">{{ '%.1f'|format(p.xgboost_confidence) }}%</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-secondary small">{{ p.decision_tree_prediction or '—' }}</td>
+            <td>
+              {% if p.decision_tree_confidence %}
+              <span class="badge-soft-info">{{ '%.1f'|format(p.decision_tree_confidence) }}%</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if p.final_prediction == 'Healthy' %}
+              <span class="badge-soft-success">Healthy</span>
+              {% else %}
+              <span class="badge-soft-warning">{{ p.final_prediction or '—' }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('prediction.view_prediction', pred_id=p.id) }}" class="btn btn-sm btn-light border" title="View Full Report">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="saas-card text-center py-5 px-4">
+  <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: var(--accent-green); color: var(--primary-green);">
+    <i class="bi bi-cpu fs-3"></i>
+  </div>
+  <h5 class="fw-bold mb-1" style="color: var(--text-main);">No Disease Screenings Recorded</h5>
+  <p class="text-secondary small mb-3">AI prediction audits will appear here after diagnostic evaluations are performed on your flocks.</p>
+  <a href="{{ url_for('prediction.new_prediction') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i> Run First Screening
+  </a>
+</div>
+{% endif %}
+{% endblock %}

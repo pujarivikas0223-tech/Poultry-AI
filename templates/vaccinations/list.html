@@ -1,0 +1,190 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Vaccinations{% endblock %}
+{% block page_title %}Immunization Records{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Vaccinations</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+  <div>
+    <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">Flock Immunization Records</h2>
+    <p class="text-secondary small mb-0">Track preventative vaccinations, booster deadlines, and medication administration records.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('vaccination.calendar_view') }}" class="btn btn-light border d-inline-flex align-items-center gap-2">
+      <i class="bi bi-calendar3"></i>
+      <span>Calendar View</span>
+    </a>
+    <a href="{{ url_for('vaccination.add_vaccination') }}" class="btn btn-primary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-plus-lg"></i>
+      <span>Log Vaccination</span>
+    </a>
+  </div>
+</div>
+
+<!-- Summary Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-4">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: var(--primary-green);">{{ completed|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px;">Completed</div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: #0284C7;">{{ upcoming|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px;">Upcoming / Scheduled</div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: {% if missed|length > 0 %}#DC2626{% else %}var(--text-main){% endif %};">{{ missed|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px;">Overdue / Missed</div>
+    </div>
+  </div>
+</div>
+
+{% if missed %}
+<div class="alert alert-danger d-flex align-items-center gap-2 p-3 mb-4 rounded-3 border-0 shadow-sm">
+  <i class="bi bi-exclamation-octagon-fill fs-5 text-danger flex-shrink-0"></i>
+  <div class="small">
+    <strong>{{ missed|length }} Overdue Immunization Schedule(s) Detected.</strong>
+    Administer pending vaccines or update scheduled dates to ensure biosecurity coverage for your cohorts.
+  </div>
+</div>
+{% endif %}
+
+<!-- Filter Tabs -->
+<ul class="nav nav-tabs mb-3 border-bottom" id="vaccTabs" style="border-color: var(--border-color) !important;">
+  <li class="nav-item">
+    <button class="nav-link active fw-semibold small text-secondary" data-filter="all">All ({{ all_vacc|length }})</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link fw-semibold small text-secondary" data-filter="completed">Completed ({{ completed|length }})</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link fw-semibold small text-secondary" data-filter="upcoming">Upcoming ({{ upcoming|length }})</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link fw-semibold small text-secondary" data-filter="missed">Missed ({{ missed|length }})</button>
+  </li>
+</ul>
+
+<div class="saas-card">
+  <div class="card-body p-0">
+    {% if all_vacc %}
+    <div class="table-responsive">
+      <table class="table-saas mb-0" id="vaccTable">
+        <thead>
+          <tr>
+            <th>Vaccine Profile</th>
+            <th>Batch Cohort</th>
+            <th>Administered</th>
+            <th>Next Due Date</th>
+            <th>Dosage</th>
+            <th>Route</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in all_vacc %}
+          {% set v_class = 'completed' if v.status == 'Completed' else ('upcoming' if v.status == 'Upcoming' else 'missed') %}
+          <tr data-status="{{ v_class }}">
+            <td class="fw-semibold" style="color: var(--text-main);">{{ v.vaccine_name }}</td>
+            <td class="text-secondary small">{{ v.batch.batch_name if v.batch else '—' }}</td>
+            <td class="text-secondary small">{{ v.vaccination_date.strftime('%d %b %Y') if v.vaccination_date else '—' }}</td>
+            <td class="text-secondary small">{{ v.next_vaccination_date.strftime('%d %b %Y') if v.next_vaccination_date else '—' }}</td>
+            <td class="text-secondary small">{{ v.dosage or '—' }}</td>
+            <td class="text-secondary small">{{ v.route or '—' }}</td>
+            <td>
+              {% if v.status == 'Completed' %}
+              <span class="badge-soft-success">{{ v.status }}</span>
+              {% elif v.status == 'Upcoming' %}
+              <span class="badge-soft-info">{{ v.status }}</span>
+              {% else %}
+              <span class="badge-soft-danger">{{ v.status }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('vaccination.edit_vaccination', vacc_id=v.id) }}" class="btn btn-sm btn-light border" title="Edit Vaccination">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-light border text-danger" title="Delete Entry"
+                        onclick="confirmDelete({{ v.id }}, '{{ url_for('vaccination.delete_vaccination', vacc_id=v.id) }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 px-4">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: var(--accent-green); color: var(--primary-green);">
+        <i class="bi bi-shield-check fs-3"></i>
+      </div>
+      <h5 class="fw-bold mb-1" style="color: var(--text-main);">No Vaccination Records Found</h5>
+      <p class="text-secondary small mb-3">Schedule your flock's immunization calendar according to veterinarian standards.</p>
+      <a href="{{ url_for('vaccination.add_vaccination') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Log First Vaccination
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="delModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body p-4 text-center">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 52px; height: 52px; background-color: #FEE2E2; color: #DC2626;">
+          <i class="bi bi-exclamation-triangle fs-4"></i>
+        </div>
+        <h5 class="fw-bold mb-2" style="color: var(--text-main);">Delete Immunization Record</h5>
+        <p class="text-secondary small mb-4">
+          Are you sure you want to permanently delete this vaccination entry?
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <form id="delForm" method="POST" class="d-inline m-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger px-4">Delete Record</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(id, url) {
+  document.getElementById('delForm').action = url;
+  new bootstrap.Modal(document.getElementById('delModal')).show();
+}
+document.querySelectorAll('#vaccTabs .nav-link').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#vaccTabs .nav-link').forEach(b => {
+      b.classList.remove('active');
+      b.style.color = 'var(--text-secondary)';
+      b.style.borderBottom = 'none';
+    });
+    this.classList.add('active');
+    this.style.color = 'var(--primary-green)';
+    this.style.borderBottom = '2px solid var(--primary-green)';
+    const f = this.dataset.filter;
+    document.querySelectorAll('#vaccTable tbody tr').forEach(row => {
+      row.style.display = (f === 'all' || row.dataset.status === f) ? '' : 'none';
+    });
+  });
+});
+</script>
+{% endblock %}

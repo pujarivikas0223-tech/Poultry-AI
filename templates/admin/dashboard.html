@@ -1,0 +1,606 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+
+  <!-- ── Top Greeting Header ── -->
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.45rem; letter-spacing: -0.02em;">
+        Good morning, {{ current_user.full_name or 'Administrator' }}
+      </h2>
+      <p class="text-secondary mb-0" style="font-size: 0.88rem;">
+        Here's what's happening across your poultry disease prevention &amp; vaccination platform.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge-soft-success">
+        <i class="bi bi-clock"></i>
+        <span>{{ now.strftime('%d %b %Y, %I:%M %p') if now else '' }}</span>
+      </span>
+      <a href="{{ url_for('admin.reports_home') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-download"></i> Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Summary Statistics Grid (7 Cards) ── -->
+  <div class="row g-3 mb-4">
+
+    <!-- Total Farmers -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Total Farmers</span>
+          <div class="stat-card-icon icon-emerald">
+            <i class="bi bi-people"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_farmers }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">Registered accounts</span>
+          <a href="{{ url_for('admin.farmers_list') }}" class="stat-card-link">
+            View all <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Farms -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Total Farms</span>
+          <div class="stat-card-icon icon-green">
+            <i class="bi bi-geo-alt"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_farms }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">Active poultry units</span>
+          <a href="{{ url_for('admin.all_farms') }}" class="stat-card-link">
+            View all <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Batches -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Total Batches</span>
+          <div class="stat-card-icon icon-amber">
+            <i class="bi bi-layers"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_batches }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">Managed flocks</span>
+          <a href="{{ url_for('admin.all_batches') }}" class="stat-card-link">
+            View all <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Birds -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Total Birds</span>
+          <div class="stat-card-icon icon-blue">
+            <i class="bi bi-feather"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_birds | default(0) | format_number }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">Live population</span>
+          <span class="badge-soft-success">Active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Records -->
+    <div class="col-12 col-sm-6 col-xl-4">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Health Records</span>
+          <div class="stat-card-icon icon-teal">
+            <i class="bi bi-activity"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_health_records }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">Clinical inspections</span>
+          <a href="{{ url_for('admin.all_health_records') }}" class="stat-card-link">
+            View logs <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disease Predictions -->
+    <div class="col-12 col-sm-6 col-xl-4">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Disease Predictions</span>
+          <div class="stat-card-icon icon-purple">
+            <i class="bi bi-cpu"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_predictions }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">AI screenings run</span>
+          <a href="{{ url_for('admin.all_predictions') }}" class="stat-card-link">
+            View predictions <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vaccination Records -->
+    <div class="col-12 col-sm-6 col-xl-4">
+      <div class="stat-card-saas">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Vaccination Records</span>
+          <div class="stat-card-icon icon-rose">
+            <i class="bi bi-shield-check"></i>
+          </div>
+        </div>
+        <div class="stat-card-value">{{ total_vaccinations }}</div>
+        <div class="stat-card-footer">
+          <span class="text-muted">Doses logged</span>
+          <a href="{{ url_for('admin.all_vaccinations') }}" class="stat-card-link">
+            View schedules <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Analytics Charts Row ── -->
+  <div class="row g-3 mb-4">
+
+    <!-- Disease Screening Distribution Chart -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-pie-chart"></i>
+            <span>Disease Distribution</span>
+          </h3>
+          <span class="badge-soft-purple">AI Models</span>
+        </div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <div style="position: relative; width: 100%; max-width: 260px; height: 240px;">
+            <canvas id="diseaseChart"></canvas>
+          </div>
+          <p class="text-muted text-center mt-3 mb-0" style="font-size: 0.78rem;">
+            Breakdown of preliminary screening results
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Condition Overview Chart -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-heart-pulse"></i>
+            <span>Flock Health Overview</span>
+          </h3>
+          <span class="badge-soft-success">Clinical</span>
+        </div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <div style="position: relative; width: 100%; max-width: 260px; height: 240px;">
+            <canvas id="conditionChart"></canvas>
+          </div>
+          <p class="text-muted text-center mt-3 mb-0" style="font-size: 0.78rem;">
+            Distribution of documented flock conditions
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vaccination Analytics Chart -->
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-shield-check"></i>
+            <span>Vaccination Pipeline</span>
+          </h3>
+          <span class="badge-soft-info">Status</span>
+        </div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <div style="position: relative; width: 100%; max-width: 260px; height: 240px;">
+            <canvas id="vaccineChart"></canvas>
+          </div>
+          <p class="text-muted text-center mt-3 mb-0" style="font-size: 0.78rem;">
+            Completed, scheduled, and missed doses
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Operational Feeds / Recent Activities ── -->
+  <div class="row g-3 mb-4">
+
+    <!-- Recent Health Records Table -->
+    <div class="col-12 col-xl-7">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-journal-medical"></i>
+            <span>Recent Health Records</span>
+          </h3>
+          <a href="{{ url_for('admin.all_health_records') }}" class="btn btn-sm btn-outline-secondary">
+            View All
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_records %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Batch / Farm</th>
+                    <th>Birds</th>
+                    <th>Condition</th>
+                    <th>Mortality</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in recent_records[:6] %}
+                    <tr>
+                      <td class="text-secondary text-nowrap" style="font-size: 0.8rem;">
+                        {{ r.record_date.strftime('%d %b %Y') if r.record_date else '—' }}
+                      </td>
+                      <td>
+                        <div class="fw-semibold text-truncate" style="max-width: 170px;">
+                          {{ r.batch.batch_name if r.batch else '—' }}
+                        </div>
+                        <div class="text-muted" style="font-size: 0.74rem;">
+                          {{ r.farm.farm_name if r.farm else '—' }}
+                        </div>
+                      </td>
+                      <td>
+                        <span class="fw-semibold">{{ r.number_of_birds }}</span>
+                        <span class="text-muted small">({{ r.bird_age_weeks }}w)</span>
+                      </td>
+                      <td>
+                        {% if r.health_condition == 'Excellent' or r.health_condition == 'Good' %}
+                          <span class="badge-soft-success">{{ r.health_condition }}</span>
+                        {% elif r.health_condition == 'Fair' %}
+                          <span class="badge-soft-warning">{{ r.health_condition }}</span>
+                        {% else %}
+                          <span class="badge-soft-danger">{{ r.health_condition or 'Unknown' }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if r.mortality_count and r.mortality_count > 0 %}
+                          <span class="text-danger fw-semibold">{{ r.mortality_count }}</span>
+                          <span class="text-muted" style="font-size: 0.72rem;">({{ r.mortality_rate }}%)</span>
+                        {% else %}
+                          <span class="text-success fw-medium">0</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-state-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+              <div class="empty-state-title">No Health Records Logged</div>
+              <p class="empty-state-text">Clinical health observations recorded by farmers will appear here.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Recent Predictions & Upcoming Vaccines -->
+    <div class="col-12 col-xl-5">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-cpu"></i>
+            <span>Recent AI Predictions</span>
+          </h3>
+          <a href="{{ url_for('admin.all_predictions') }}" class="btn btn-sm btn-outline-secondary">
+            View All
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_predictions %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Batch</th>
+                    <th>Prediction</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in recent_predictions[:5] %}
+                    <tr>
+                      <td class="text-secondary text-nowrap" style="font-size: 0.8rem;">
+                        {{ p.prediction_date.strftime('%d %b') if p.prediction_date else '—' }}
+                      </td>
+                      <td>
+                        <div class="fw-semibold text-truncate" style="max-width: 110px;">
+                          {{ p.batch.batch_name if p.batch else '—' }}
+                        </div>
+                      </td>
+                      <td>
+                        {% if p.final_prediction == 'Healthy' %}
+                          <span class="badge-soft-success">Healthy</span>
+                        {% else %}
+                          <span class="badge-soft-warning">{{ p.final_prediction }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% set conf = p.xgboost_confidence or p.decision_tree_confidence %}
+                        {% if conf %}
+                          <span class="fw-semibold" style="font-size: 0.82rem;">{{ '%.1f'|format(conf) }}%</span>
+                        {% else %}
+                          <span class="text-muted">—</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state py-4">
+              <div class="empty-state-icon"><i class="bi bi-robot"></i></div>
+              <div class="empty-state-title">No Disease Screenings Yet</div>
+              <p class="empty-state-text">Predictions performed by farmers will populate here.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Bottom Row: Recent Farmers Joined & Upcoming Vaccinations ── -->
+  <div class="row g-3">
+
+    <!-- Recent Farmers -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-person-check"></i>
+            <span>Recently Registered Farmers</span>
+          </h3>
+          <a href="{{ url_for('admin.farmers_list') }}" class="btn btn-sm btn-outline-secondary">
+            Manage Farmers
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_farmers %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Farmer</th>
+                    <th>Contact</th>
+                    <th>Joined</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for f in recent_farmers %}
+                    <tr>
+                      <td>
+                        <div class="fw-semibold">{{ f.full_name }}</div>
+                        <div class="text-muted" style="font-size: 0.74rem;">{{ f.email }}</div>
+                      </td>
+                      <td class="text-secondary" style="font-size: 0.82rem;">
+                        {{ f.phone or '—' }}
+                      </td>
+                      <td class="text-secondary text-nowrap" style="font-size: 0.8rem;">
+                        {{ f.created_at.strftime('%d %b %Y') if f.created_at else '—' }}
+                      </td>
+                      <td>
+                        <a href="{{ url_for('admin.farmer_detail', farmer_id=f.id) }}" class="btn btn-xs btn-outline-primary">
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state py-4">
+              <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+              <div class="empty-state-title">No Farmers Registered</div>
+              <p class="empty-state-text">New farmer registrations will appear here.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Vaccinations Reminder -->
+    <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <h3 class="card-header-title">
+            <i class="bi bi-calendar-event"></i>
+            <span>Upcoming Scheduled Vaccinations</span>
+          </h3>
+          <a href="{{ url_for('admin.all_vaccinations') }}" class="btn btn-sm btn-outline-secondary">
+            View Schedule
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if upcoming_vaccinations %}
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>Due Date</th>
+                    <th>Vaccine</th>
+                    <th>Batch</th>
+                    <th>Route</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for v in upcoming_vaccinations %}
+                    <tr>
+                      <td class="text-nowrap" style="font-size: 0.82rem;">
+                        <span class="badge-soft-info">
+                          <i class="bi bi-calendar3"></i>
+                          {{ v.next_vaccination_date.strftime('%d %b %Y') if v.next_vaccination_date else '—' }}
+                        </span>
+                      </td>
+                      <td class="fw-semibold">{{ v.vaccine_name }}</td>
+                      <td class="text-secondary">{{ v.batch.batch_name if v.batch else '—' }}</td>
+                      <td><span class="badge bg-light text-dark border">{{ v.route or 'Water' }}</span></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state py-4">
+              <div class="empty-state-icon"><i class="bi bi-shield-check"></i></div>
+              <div class="empty-state-title">No Pending Vaccinations</div>
+              <p class="empty-state-text">All scheduled vaccination doses are up to date.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // 1. Disease Distribution Chart
+  const diseaseData = {{ pred_counts | safe }};
+  const dLabels = Object.keys(diseaseData);
+  const dValues = Object.values(diseaseData);
+  const dCtx = document.getElementById('diseaseChart').getContext('2d');
+
+  if (dLabels.length > 0) {
+    new Chart(dCtx, {
+      type: 'doughnut',
+      data: {
+        labels: dLabels,
+        datasets: [{
+          data: dValues,
+          backgroundColor: ['#22a06b', '#f59e0b', '#ef4444', '#0284c7', '#8b5cf6', '#0d9488', '#f97316', '#64748b'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11, family: 'Inter' } } }
+        },
+        cutout: '68%'
+      }
+    });
+  } else {
+    document.getElementById('diseaseChart').parentElement.innerHTML =
+      '<div class="text-center py-4 text-muted small"><i class="bi bi-info-circle me-1"></i>No predictions logged yet</div>';
+  }
+
+  // 2. Health Condition Chart
+  const condData = {{ condition_counts | safe }};
+  const cLabels = Object.keys(condData);
+  const cValues = Object.values(condData);
+  const cCtx = document.getElementById('conditionChart').getContext('2d');
+
+  if (cLabels.length > 0) {
+    new Chart(cCtx, {
+      type: 'doughnut',
+      data: {
+        labels: cLabels,
+        datasets: [{
+          data: cValues,
+          backgroundColor: ['#166534', '#22a06b', '#f59e0b', '#ef4444', '#991b1b'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11, family: 'Inter' } } }
+        },
+        cutout: '68%'
+      }
+    });
+  } else {
+    document.getElementById('conditionChart').parentElement.innerHTML =
+      '<div class="text-center py-4 text-muted small"><i class="bi bi-info-circle me-1"></i>No health records logged yet</div>';
+  }
+
+  // 3. Vaccination Pipeline Chart
+  const vStats = {{ vacc_stats | safe }};
+  const vLabels = Object.keys(vStats);
+  const vValues = Object.values(vStats);
+  const vCtx = document.getElementById('vaccineChart').getContext('2d');
+
+  if (vValues.some(val => val > 0)) {
+    new Chart(vCtx, {
+      type: 'doughnut',
+      data: {
+        labels: vLabels,
+        datasets: [{
+          data: vValues,
+          backgroundColor: ['#22a06b', '#0284c7', '#ef4444'],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11, family: 'Inter' } } }
+        },
+        cutout: '68%'
+      }
+    });
+  } else {
+    document.getElementById('vaccineChart').parentElement.innerHTML =
+      '<div class="text-center py-4 text-muted small"><i class="bi bi-info-circle me-1"></i>No vaccination activity yet</div>';
+  }
+
+})();
+</script>
+{% endblock %}

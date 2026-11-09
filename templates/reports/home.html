@@ -1,0 +1,116 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Reports & Analytics{% endblock %}
+{% block page_title %}Operational Reports{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active">Reports</li>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">Reports &amp; Data Exports</h2>
+  <p class="text-secondary small mb-0">Generate summary insights, export audit spreadsheets, and examine operational performance.</p>
+</div>
+
+<!-- Report Cards Grid -->
+<div class="row g-4 mb-4">
+  <!-- Health Summary Card -->
+  <div class="col-12 col-md-4">
+    <div class="saas-card h-100 d-flex flex-column">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: var(--accent-green); color: var(--primary-green);">
+          <i class="bi bi-activity fs-4"></i>
+        </div>
+        <h5 class="fw-bold mb-2" style="color: var(--text-main);">Health Summary Report</h5>
+        <p class="text-secondary small mb-4 flex-grow-1">
+          Historical mortality analysis, body temperature variations, feed consumption efficiency, and clinical vital sign trends.
+        </p>
+        <div class="d-flex gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+          <a href="{{ url_for('report.health_summary') }}" class="btn btn-primary btn-sm flex-fill">View Report</a>
+          <a href="{{ url_for('report.export_health_csv') }}" class="btn btn-light border btn-sm d-inline-flex align-items-center gap-1" title="Download CSV">
+            <i class="bi bi-download"></i> CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disease Prediction Report -->
+  <div class="col-12 col-md-4">
+    <div class="saas-card h-100 d-flex flex-column">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: #F3E8FF; color: #9333EA;">
+          <i class="bi bi-cpu fs-4"></i>
+        </div>
+        <h5 class="fw-bold mb-2" style="color: var(--text-main);">Diagnostic Screening Audit</h5>
+        <p class="text-secondary small mb-4 flex-grow-1">
+          Review all AI-powered dual model pathogen predictions, classification confidence scores, and historical batch risk levels.
+        </p>
+        <div class="d-flex gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+          <a href="{{ url_for('report.prediction_report') }}" class="btn btn-primary btn-sm flex-fill">View Report</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vaccination Report -->
+  <div class="col-12 col-md-4">
+    <div class="saas-card h-100 d-flex flex-column">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: #E0F2FE; color: #0284C7;">
+          <i class="bi bi-shield-check fs-4"></i>
+        </div>
+        <h5 class="fw-bold mb-2" style="color: var(--text-main);">Immunization Compliance</h5>
+        <p class="text-secondary small mb-4 flex-grow-1">
+          Track vaccination completion percentages, upcoming booster deadlines, and biosecurity schedule compliance per cohort.
+        </p>
+        <div class="d-flex gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+          <a href="{{ url_for('report.vaccination_report') }}" class="btn btn-primary btn-sm flex-fill">View Report</a>
+          <a href="{{ url_for('report.export_vaccination_csv') }}" class="btn btn-light border btn-sm d-inline-flex align-items-center gap-1" title="Download CSV">
+            <i class="bi bi-download"></i> CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Facility Sites Summary Table -->
+{% if farms %}
+<div class="saas-card">
+  <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--border-color) !important;">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-buildings text-success"></i>
+      <h6 class="fw-bold mb-0" style="color: var(--text-main);">Facility Operational Status</h6>
+    </div>
+    <span class="badge-soft-info">{{ farms|length }} Sites Registered</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table-saas mb-0">
+        <thead>
+          <tr>
+            <th>Facility Name</th>
+            <th>Location</th>
+            <th>Active Batches</th>
+            <th>Flock Count</th>
+            <th>Capacity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in farms %}
+          <tr>
+            <td class="fw-bold" style="color: var(--text-main);">{{ f.farm_name }}</td>
+            <td class="text-secondary small">{{ f.location or '—' }}</td>
+            <td class="fw-semibold text-dark">{{ f.active_batches_count }}</td>
+            <td class="fw-semibold text-dark">{{ f.total_birds }}</td>
+            <td class="text-secondary small">{{ f.total_capacity or '—' }} birds</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

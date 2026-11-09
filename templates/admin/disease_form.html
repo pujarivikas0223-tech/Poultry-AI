@@ -1,0 +1,84 @@
+{% extends 'base_admin.html' %}
+{% block title %}{{ 'Edit Disease' if disease else 'Add Disease' }} – Knowledgebase{% endblock %}
+{% block page_title %}{{ 'Edit Disease' if disease else 'New Disease Entry' }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.diseases_list') }}">Diseases</a></li>
+<li class="breadcrumb-item active">{{ 'Edit' if disease else 'Add' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-header-title">
+          <i class="bi bi-shield-exclamation"></i>
+          <span>{{ 'Edit Disease Profile: ' ~ disease.name if disease else 'Add New Clinical Disease Profile' }}</span>
+        </h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.edit_disease', disease_id=disease.id) if disease else url_for('admin.add_disease') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <div class="col-12 col-md-8">
+              <label class="form-label">Disease / Pathogen Name *</label>
+              <input type="text" name="name" class="form-control" value="{{ disease.name if disease else '' }}" required placeholder="e.g. Newcastle Disease (APMV-1)">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Clinical Risk Severity *</label>
+              <select name="severity" class="form-select">
+                {% for s in ['Low','Medium','High','Critical'] %}
+                <option value="{{ s }}" {% if disease and disease.severity == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Clinical Overview &amp; Etiology</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="Brief pathology, viral/bacterial family, and age susceptibility...">{{ disease.description if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Recognized Symptoms &amp; Signs</label>
+              <textarea name="symptoms" class="form-control" rows="3" placeholder="Respiratory distress, ruffled feathers, diarrhea...">{{ disease.symptoms if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Standard Prevention Protocols</label>
+              <textarea name="prevention" class="form-control" rows="3" placeholder="Vaccine regimen, preventive biosecurity...">{{ disease.prevention if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Sanitation &amp; Hygiene Standards</label>
+              <textarea name="hygiene_recommendations" class="form-control" rows="3" placeholder="Disinfection procedures, litter management...">{{ disease.hygiene_recommendations if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Biosecurity &amp; Containment</label>
+              <textarea name="biosecurity_measures" class="form-control" rows="3" placeholder="All-in all-out, vehicle disinfection, barrier measures...">{{ disease.biosecurity_measures if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Flock Isolation &amp; Quarantine</label>
+              <textarea name="isolation_guidance" class="form-control" rows="3" placeholder="Quarantine protocol, isolation pen requirements...">{{ disease.isolation_guidance if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label">Veterinary Consultation Advice</label>
+              <textarea name="veterinary_advice" class="form-control" rows="3" placeholder="Diagnostic lab submission, veterinary authority notification...">{{ disease.veterinary_advice if disease else '' }}</textarea>
+            </div>
+
+            <div class="col-12 d-flex gap-2 justify-content-end pt-3 border-top mt-3">
+              <a href="{{ url_for('admin.diseases_list') }}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i> {{ 'Save Disease Profile' if disease else 'Create Disease Entry' }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

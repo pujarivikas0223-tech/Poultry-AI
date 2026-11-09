@@ -1,0 +1,156 @@
+{% extends 'base_admin.html' %}
+{% block title %}Farmer Directory{% endblock %}
+{% block page_title %}Farmer Directory{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Farmers</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header & Search Toolbar -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Registered Farmers</h4>
+          <p class="text-secondary mb-0 small">Manage and review all registered poultry producers ({{ farmers|length }} total)</p>
+        </div>
+        <form method="GET" action="{{ url_for('admin.farmers_list') }}" class="d-flex gap-2" style="max-width: 380px; width: 100%;">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name, email or phone…">
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+          {% if q %}
+            <a href="{{ url_for('admin.farmers_list') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Farmers Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if farmers %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Producer Name</th>
+              <th>Contact Info</th>
+              <th>Location</th>
+              <th>Farms</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for farmer in farmers %}
+            <tr>
+              <td class="text-secondary small">{{ loop.index }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="user-avatar-sm" style="background: #dcfce7; color: #166534;">
+                    {{ farmer.full_name[0].upper() }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold">{{ farmer.full_name }}</div>
+                    <div class="text-secondary" style="font-size: 0.75rem;">
+                      Last active: {{ farmer.last_login.strftime('%d %b %Y') if farmer.last_login else 'Never' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width: 180px;">{{ farmer.email }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">{{ farmer.phone }}</div>
+              </td>
+              <td>
+                <span class="text-secondary small">{{ farmer.address or '—' }}</span>
+              </td>
+              <td>
+                <span class="badge-soft-info">{{ farmer.farms.count() }} farm(s)</span>
+              </td>
+              <td>
+                {% if farmer.is_active %}
+                  <span class="badge-soft-success"><i class="bi bi-check-circle-fill"></i> Active</span>
+                {% else %}
+                  <span class="badge-soft-warning"><i class="bi bi-dash-circle-fill"></i> Inactive</span>
+                {% endif %}
+              </td>
+              <td class="text-secondary text-nowrap" style="font-size: 0.82rem;">
+                {{ farmer.created_at.strftime('%d %b %Y') if farmer.created_at else '—' }}
+              </td>
+              <td class="text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                  <a href="{{ url_for('admin.farmer_detail', farmer_id=farmer.id) }}" class="btn btn-xs btn-outline-primary" title="View Details">
+                    <i class="bi bi-eye"></i> View
+                  </a>
+                  <form method="POST" action="{{ url_for('admin.toggle_farmer', farmer_id=farmer.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-xs btn-outline-secondary" title="{{ 'Deactivate Farmer' if farmer.is_active else 'Activate Farmer' }}">
+                      <i class="bi bi-{{ 'toggle-on text-success' if farmer.is_active else 'toggle-off text-muted' }}"></i>
+                    </button>
+                  </form>
+                  <button type="button" class="btn btn-xs btn-outline-danger" title="Delete Farmer"
+                          onclick="confirmDelete('{{ farmer.full_name }}','{{ url_for('admin.delete_farmer', farmer_id=farmer.id) }}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+        <div class="empty-state-title">No Farmers Found</div>
+        <p class="empty-state-text">
+          {% if q %}No registered farmers matched your search "{{ q }}".{% else %}There are currently no farmer accounts registered in the database.{% endif %}
+        </p>
+        {% if q %}
+          <a href="{{ url_for('admin.farmers_list') }}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Farmer</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small text-secondary py-3">
+        Are you sure you want to permanently delete <strong id="deleteTargetName" class="text-dark"></strong>? All associated farms, batches, health logs, and vaccines will be removed.
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-danger">Confirm Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(name, url) {
+  document.getElementById('deleteTargetName').textContent = name;
+  document.getElementById('deleteForm').action = url;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

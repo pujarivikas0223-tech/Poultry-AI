@@ -1,0 +1,165 @@
+{% extends 'base_farmer.html' %}
+{% block title %}{{ 'Edit Health Record' if record else 'Log Health Record' }}{% endblock %}
+{% block page_title %}{{ 'Edit Health Observation' if record else 'Log Flock Vital Record' }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('health.list_records') }}">Health Records</a></li>
+<li class="breadcrumb-item active">{{ 'Edit' if record else 'Log Entry' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-9">
+    <div class="saas-card">
+      <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 40px; height: 40px; background-color: var(--accent-green); color: var(--primary-green);">
+            <i class="bi bi-activity fs-5"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">{{ 'Edit Health Observation' if record else 'Record Flock Biometric Data' }}</h5>
+            <p class="text-secondary small mb-0">Record clinical vitals, environmental feed/water intake, and diagnostic indicators</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('health.edit_record', record_id=record.id) if record else url_for('health.add_record') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Section 1: Facility & Cohort -->
+          <div class="p-3 rounded-3 mb-4" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">1. Facility &amp; Cohort Identification</h6>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold small text-secondary">Farm Location <span class="text-danger">*</span></label>
+                <select name="farm_id" id="farm_select" class="form-select" required onchange="filterBatches(this.value)">
+                  <option value="">— Select Farm Site —</option>
+                  {% for f in farms %}
+                  <option value="{{ f.id }}" {% if record and record.farm_id == f.id %}selected{% endif %}>{{ f.farm_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold small text-secondary">Flock Batch <span class="text-danger">*</span></label>
+                <select name="batch_id" id="batch_select" class="form-select" required>
+                  <option value="">— Select Batch —</option>
+                  {% for b in batches %}
+                  <option value="{{ b.id }}" data-farm="{{ b.farm_id }}"
+                    {% if record and record.batch_id == b.id %}selected{% endif %}>
+                    {{ b.batch_name }} ({{ b.farm.farm_name }}) – {{ b.number_of_birds }} birds
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Biometric Measurements -->
+          <div class="p-3 rounded-3 mb-4" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">2. Biometrics &amp; Consumption Metrics</h6>
+            <div class="row g-3">
+              <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small text-secondary">Current Population <span class="text-danger">*</span></label>
+                <input type="number" name="number_of_birds" class="form-control"
+                       value="{{ record.number_of_birds if record else '' }}" required min="1" placeholder="e.g. 1000">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small text-secondary">Age (weeks) <span class="text-danger">*</span></label>
+                <input type="number" name="bird_age_weeks" class="form-control"
+                       value="{{ record.bird_age_weeks if record else '' }}" required min="0" placeholder="e.g. 5">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small text-secondary">Body Temp (°C)</label>
+                <input type="number" name="body_temperature" class="form-control" step="0.1"
+                       value="{{ record.body_temperature if record else '' }}" placeholder="41.2">
+                <div class="form-text text-muted" style="font-size: 0.7rem;">Normal: 40.5 – 42.0°C</div>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small text-secondary">Avg Weight (kg)</label>
+                <input type="number" name="bird_weight_kg" class="form-control" step="0.01"
+                       value="{{ record.bird_weight_kg if record else '' }}" placeholder="e.g. 1.85">
+              </div>
+
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Feed Intake (kg/day)</label>
+                <input type="number" name="feed_consumption_kg" class="form-control" step="0.1"
+                       value="{{ record.feed_consumption_kg if record else '' }}" placeholder="e.g. 110">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Water Intake (L/day)</label>
+                <input type="number" name="water_consumption_litres" class="form-control" step="0.1"
+                       value="{{ record.water_consumption_litres if record else '' }}" placeholder="e.g. 240">
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Mortality Headcount</label>
+                <input type="number" name="mortality_count" class="form-control"
+                       value="{{ record.mortality_count if record else '0' }}" min="0">
+                <div class="form-text text-muted" style="font-size: 0.7rem;">Dead birds observed today</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Clinical Condition -->
+          <div class="p-3 rounded-3 mb-4" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">3. Clinical Health Assessment</h6>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold small text-secondary">General Health Condition <span class="text-danger">*</span></label>
+                <select name="health_condition" class="form-select" required>
+                  {% for c in health_conditions %}
+                  <option value="{{ c }}" {% if record and record.health_condition == c %}selected{% endif %}>{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold small text-secondary">Observation Date <span class="text-danger">*</span></label>
+                <input type="date" name="record_date" class="form-control"
+                       value="{{ record.record_date.strftime('%Y-%m-%d') if record and record.record_date else today }}" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small text-secondary">Symptoms &amp; Clinical Signs</label>
+                <textarea name="symptoms" class="form-control" rows="3"
+                          placeholder="Describe respiratory sounds, nasal/ocular discharge, fecal consistency/color, comb discoloration, tremor, lameness...">{{ record.symptoms if record else '' }}</textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small text-secondary">Veterinary Notes &amp; Actions</label>
+                <textarea name="notes" class="form-control" rows="2"
+                          placeholder="Treatments administered, vitamins added to water, temperature adjustments in shed...">{{ record.notes if record else '' }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex align-items-center gap-2 pt-2 border-top" style="border-color: var(--border-color) !important;">
+            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+              <i class="bi bi-check-lg"></i>
+              <span>{{ 'Save Changes' if record else 'Save Health Record' }}</span>
+            </button>
+            <a href="{{ url_for('health.list_records') }}" class="btn btn-light border">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterBatches(farmId) {
+  const sel = document.getElementById('batch_select');
+  Array.from(sel.options).forEach(opt => {
+    if (!opt.value) return;
+    opt.style.display = (!farmId || opt.dataset.farm === farmId) ? '' : 'none';
+  });
+  if (farmId) {
+    const firstMatch = Array.from(sel.options).find(opt => opt.value && opt.dataset.farm === farmId);
+    if (firstMatch) sel.value = firstMatch.value;
+  }
+}
+{% if record %}
+filterBatches('{{ record.farm_id }}');
+document.getElementById('batch_select').value = '{{ record.batch_id }}';
+{% endif %}
+</script>
+{% endblock %}

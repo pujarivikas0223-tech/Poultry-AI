@@ -1,0 +1,103 @@
+{% extends 'base_admin.html' %}
+{% block title %}All Farms – Admin{% endblock %}
+{% block page_title %}Farm Directory{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Farms</li>{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+
+  <!-- Header Toolbar -->
+  <div class="card">
+    <div class="card-body py-3">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div>
+          <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.15rem;">Poultry Production Facilities</h4>
+          <p class="text-secondary mb-0 small">Overview of all registered farm sites across producers ({{ farms|length }} total)</p>
+        </div>
+        <form method="GET" action="{{ url_for('admin.all_farms') }}" class="d-flex gap-2" style="max-width: 380px; width: 100%;">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by farm, owner or location…">
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+          {% if q %}
+            <a href="{{ url_for('admin.all_farms') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Farms Table Card -->
+  <div class="card">
+    <div class="card-body p-0">
+      {% if farms %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Facility Name</th>
+              <th>Owner / Farmer</th>
+              <th>Geographic Location</th>
+              <th>Active Batches</th>
+              <th>Live Birds</th>
+              <th>Status</th>
+              <th>Registered</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for farm in farms %}
+            <tr>
+              <td class="text-secondary small">{{ loop.index }}</td>
+              <td>
+                <div class="fw-semibold">{{ farm.farm_name }}</div>
+                {% if farm.total_capacity %}
+                  <div class="text-muted" style="font-size: 0.74rem;">Capacity: {{ farm.total_capacity }} birds</div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="fw-medium">{{ farm.owner.full_name }}</div>
+                <div class="text-secondary" style="font-size: 0.74rem;">{{ farm.owner.phone }}</div>
+              </td>
+              <td>
+                <span class="text-secondary small"><i class="bi bi-geo-alt me-1"></i>{{ farm.location or '—' }}</span>
+              </td>
+              <td>
+                <span class="badge-soft-info">{{ farm.active_batches_count }} batch(es)</span>
+              </td>
+              <td>
+                <span class="fw-semibold" style="color: var(--primary);">{{ farm.total_birds }}</span>
+              </td>
+              <td>
+                {% if farm.is_active %}
+                  <span class="badge-soft-success"><i class="bi bi-check-circle-fill"></i> Operational</span>
+                {% else %}
+                  <span class="badge-soft-warning"><i class="bi bi-dash-circle-fill"></i> Inactive</span>
+                {% endif %}
+              </td>
+              <td class="text-secondary text-nowrap" style="font-size: 0.82rem;">
+                {{ farm.created_at.strftime('%d %b %Y') if farm.created_at else '—' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-geo-alt"></i></div>
+        <div class="empty-state-title">No Farms Found</div>
+        <p class="empty-state-text">
+          {% if q %}No poultry facilities matched your search "{{ q }}".{% else %}No poultry farms have been registered in the database yet.{% endif %}
+        </p>
+        {% if q %}
+          <a href="{{ url_for('admin.all_farms') }}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

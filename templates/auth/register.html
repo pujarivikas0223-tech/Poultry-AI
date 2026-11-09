@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Farmer Account – Poultry Disease Prevention & Biosecurity System</title>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/main.css">
+
+  <style>
+    body {
+      background-color: var(--bg-main, #F5F8F5);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2.5rem 1rem;
+    }
+    .auth-card-saas {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color, #E5EDE6);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(22, 101, 52, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      width: 100%;
+      max-width: 520px;
+      overflow: hidden;
+    }
+    .form-control:focus {
+      border-color: var(--secondary-green, #22A06B);
+      box-shadow: 0 0 0 3px rgba(34, 160, 107, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 9999; min-width: 360px; max-width: 90%;">
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ 'danger' if cat in ['error', 'danger'] else 'success' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-{{ 'exclamation-circle' if cat in ['error', 'danger'] else 'check-circle' }}-fill fs-5"></i>
+            <span class="small">{{ msg }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="auth-card-saas">
+    <!-- Header Branding -->
+    <div class="text-center p-4 pb-3">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px; background-color: var(--accent-green, #DCFCE7); color: var(--primary-green, #166534);">
+        <i class="bi bi-shield-check fs-2"></i>
+      </div>
+      <h4 class="fw-bold mb-1" style="color: var(--text-main, #1F2937); letter-spacing: -0.3px;">Farmer Registration</h4>
+      <p class="text-secondary small mb-0">Create your producer account to manage farms, batches, and vaccines</p>
+    </div>
+
+    <div class="p-4 pt-1">
+      <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label small fw-semibold text-secondary">Full Legal Name <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person"></i></span>
+              <input type="text" name="full_name" class="form-control border-start-0 ps-0"
+                     value="{{ form_data.get('full_name','') }}"
+                     placeholder="e.g. Ramesh Patel" required autocomplete="name">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold text-secondary">Email Address <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+              <input type="email" name="email" class="form-control border-start-0 ps-0"
+                     value="{{ form_data.get('email','') }}"
+                     placeholder="name@farm.com" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold text-secondary">Phone Number <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-telephone"></i></span>
+              <input type="tel" name="phone" class="form-control border-start-0 ps-0"
+                     value="{{ form_data.get('phone','') }}"
+                     placeholder="10-digit mobile" required autocomplete="tel">
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label small fw-semibold text-secondary">Farm / Residence Address</label>
+            <textarea name="address" class="form-control" rows="2"
+                      placeholder="Village, Taluka, District, State (optional)">{{ form_data.get('address','') }}</textarea>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold text-secondary">Create Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" class="form-control border-start-0 ps-0"
+                     placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password">
+            </div>
+            <div class="form-text text-muted" style="font-size: 0.7rem;">Minimum 6 characters</div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label small fw-semibold text-secondary">Confirm Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" name="confirm_password" class="form-control border-start-0 ps-0"
+                     placeholder="Re-enter password" required autocomplete="new-password">
+            </div>
+          </div>
+
+          <div class="col-12 pt-2">
+            <button type="submit" class="btn btn-primary w-100 py-2 d-inline-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-person-plus"></i>
+              <span>Create Producer Account</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="text-center mt-4 pt-3 border-top" style="border-color: var(--border-color, #E5EDE6) !important;">
+        <p class="small text-secondary mb-0">
+          Already registered?
+          <a href="{{ url_for('auth.login') }}" class="fw-semibold text-decoration-none" style="color: var(--primary-green, #166534);">Sign In Here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-4">
+    <small class="text-secondary" style="font-size: 0.75rem;">
+      &copy; 2024–2026 Poultry Disease Prevention &amp; Vaccination Management Platform
+    </small>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

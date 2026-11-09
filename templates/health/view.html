@@ -1,0 +1,152 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Health Record Details{% endblock %}
+{% block page_title %}Clinical Observation Details{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('health.list_records') }}">Health Records</a></li>
+<li class="breadcrumb-item active">Observation #{{ record.id }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-9">
+    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Clinical Observation</h2>
+          {% if record.health_condition in ['Excellent', 'Good'] %}
+          <span class="badge-soft-success">{{ record.health_condition }}</span>
+          {% elif record.health_condition == 'Fair' %}
+          <span class="badge-soft-warning">{{ record.health_condition }}</span>
+          {% else %}
+          <span class="badge-soft-danger">{{ record.health_condition }}</span>
+          {% endif %}
+        </div>
+        <p class="text-secondary small mb-0">
+          Recorded on {{ record.record_date.strftime('%d %B %Y') if record.record_date else '—' }}
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('prediction.new_prediction') }}?batch_id={{ record.batch_id }}" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1">
+          <i class="bi bi-cpu"></i>
+          <span>Run AI Prediction</span>
+        </a>
+        <a href="{{ url_for('health.edit_record', record_id=record.id) }}" class="btn btn-light border btn-sm d-inline-flex align-items-center gap-1">
+          <i class="bi bi-pencil"></i>
+          <span>Edit</span>
+        </a>
+        <a href="{{ url_for('health.list_records') }}" class="btn btn-light border btn-sm">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="saas-card mb-4">
+      <div class="card-body p-4">
+        <!-- Site & Cohort Details -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: var(--border-color) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center justify-content-center rounded-2" style="width: 36px; height: 36px; background-color: var(--accent-green); color: var(--primary-green);">
+              <i class="bi bi-buildings"></i>
+            </div>
+            <div>
+              <span class="text-secondary small d-block">Facility Site</span>
+              <strong class="text-dark">{{ record.farm.farm_name if record.farm else '—' }}</strong>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center justify-content-center rounded-2" style="width: 36px; height: 36px; background-color: #E0F2FE; color: #0284C7;">
+              <i class="bi bi-collection"></i>
+            </div>
+            <div>
+              <span class="text-secondary small d-block">Flock Batch</span>
+              <strong class="text-dark">{{ record.batch.batch_name if record.batch else '—' }}</strong>
+            </div>
+          </div>
+          <div>
+            <span class="text-secondary small d-block">Entry Timestamp</span>
+            <span class="text-dark small">{{ record.created_at.strftime('%d %b %Y, %H:%M') if record.created_at else '—' }}</span>
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">Flock Vital Measurements</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 text-center" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+              <div class="fw-bold fs-4" style="color: var(--primary-green);">{{ record.number_of_birds }}</div>
+              <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Population</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 text-center" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+              <div class="fw-bold fs-4" style="color: var(--text-main);">{{ record.bird_age_weeks }}</div>
+              <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Age (Weeks)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 text-center" style="background-color: {% if record.mortality_count > 0 %}#FEF2F2{% else %}var(--bg-main){% endif %}; border: 1px solid {% if record.mortality_count > 0 %}#FCA5A5{% else %}var(--border-color){% endif %};">
+              <div class="fw-bold fs-4" style="color: {% if record.mortality_count > 0 %}#DC2626{% else %}var(--text-main){% endif %};">{{ record.mortality_count }}</div>
+              <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Daily Mortality</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 text-center" style="background-color: {% if record.mortality_rate > 5 %}#FEF2F2{% else %}var(--bg-main){% endif %}; border: 1px solid {% if record.mortality_rate > 5 %}#FCA5A5{% else %}var(--border-color){% endif %};">
+              <div class="fw-bold fs-4" style="color: {% if record.mortality_rate > 5 %}#DC2626{% else %}var(--primary-green){% endif %};">{{ '%.1f'|format(record.mortality_rate) }}%</div>
+              <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Mortality Rate</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Environmental & Consumption Grid -->
+        <div class="row g-3 mb-4 p-3 rounded-3" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+          <div class="col-6 col-md-3">
+            <span class="text-secondary small d-block mb-1">Body Temperature</span>
+            <strong class="text-dark fs-6">{{ '%.1f'|format(record.body_temperature) if record.body_temperature else '—' }} °C</strong>
+            {% if record.body_temperature and record.body_temperature > 42.0 %}
+            <span class="badge-soft-danger ms-1">Fever</span>
+            {% endif %}
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-secondary small d-block mb-1">Feed Consumed</span>
+            <strong class="text-dark fs-6">{{ record.feed_consumption_kg or '—' }} kg/day</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-secondary small d-block mb-1">Water Consumed</span>
+            <strong class="text-dark fs-6">{{ record.water_consumption_litres or '—' }} L/day</strong>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="text-secondary small d-block mb-1">Avg Bird Weight</span>
+            <strong class="text-dark fs-6">{{ record.bird_weight_kg or '—' }} kg</strong>
+          </div>
+        </div>
+
+        <!-- Symptoms & Observations -->
+        <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">Diagnostic Assessment</h6>
+        <div class="space-y-3">
+          {% if record.symptoms %}
+          <div class="p-3 rounded-3" style="background-color: #FFFBEB; border: 1px solid #FDE68A;">
+            <div class="d-flex align-items-center gap-2 mb-1" style="color: #92400E; font-weight: 600;">
+              <i class="bi bi-exclamation-triangle"></i>
+              <span>Observed Symptoms</span>
+            </div>
+            <p class="mb-0 text-dark small" style="white-space: pre-line;">{{ record.symptoms }}</p>
+          </div>
+          {% else %}
+          <div class="p-3 rounded-3 text-secondary small" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <i class="bi bi-check-circle text-success me-1"></i> No pathological symptoms were observed during this inspection.
+          </div>
+          {% endif %}
+
+          {% if record.notes %}
+          <div class="p-3 rounded-3 mt-3" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <span class="text-secondary text-uppercase small d-block mb-1" style="font-size: 0.7rem; font-weight: 600;">Veterinary Notes &amp; Treatments</span>
+            <p class="mb-0 text-dark small" style="white-space: pre-line;">{{ record.notes }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

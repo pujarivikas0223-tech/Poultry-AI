@@ -1,0 +1,99 @@
+{% extends 'base_farmer.html' %}
+{% block title %}{{ 'Edit Farm' if farm else 'Add Farm' }}{% endblock %}
+{% block page_title %}{{ 'Edit Farm' if farm else 'Add New Farm' }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('farm.list_farms') }}">Farms</a></li>
+<li class="breadcrumb-item active">{{ 'Edit' if farm else 'Create' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8 col-xl-7">
+    <div class="saas-card">
+      <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 40px; height: 40px; background-color: var(--accent-green); color: var(--primary-green);">
+            <i class="bi bi-buildings fs-5"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">{{ 'Edit Farm Details' if farm else 'Register New Farm' }}</h5>
+            <p class="text-secondary small mb-0">{{ 'Update facility metadata and operational capacity' if farm else 'Set up a new poultry production facility' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('farm.edit_farm', farm_id=farm.id) if farm else url_for('farm.add_farm') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Farm Name <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-house"></i></span>
+                <input type="text" name="farm_name" class="form-control border-start-0 ps-0"
+                       value="{{ farm.farm_name if farm else '' }}" required placeholder="e.g. Green Valley Farm">
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Location / District</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
+                <input type="text" name="location" class="form-control border-start-0 ps-0"
+                       value="{{ farm.location if farm else '' }}" placeholder="e.g. Nashik, Maharashtra">
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Farm Size</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-aspect-ratio"></i></span>
+                <input type="text" name="farm_size" class="form-control border-start-0 ps-0"
+                       value="{{ farm.farm_size if farm else '' }}" placeholder="e.g. 2.5 Acres">
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Facility Address</label>
+              <textarea name="address" class="form-control" rows="2" placeholder="Full postal address or landmark coordinates">{{ farm.address if farm else '' }}</textarea>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Total Bird Capacity</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-hash"></i></span>
+                <input type="number" name="total_capacity" class="form-control border-start-0 ps-0"
+                       value="{{ farm.total_capacity if farm else '' }}" min="0" placeholder="e.g. 5000">
+              </div>
+              <div class="form-text text-muted small">Max birds this site can shelter concurrently.</div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Contact Phone</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-telephone"></i></span>
+                <input type="tel" name="contact_number" class="form-control border-start-0 ps-0"
+                       value="{{ farm.contact_number if farm else '' }}" placeholder="e.g. +91 9876543210">
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Facility Description / Notes</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="Shed specifications, ventilation system, equipment, biosecurity status...">{{ farm.description if farm else '' }}</textarea>
+            </div>
+
+            <div class="col-12 d-flex align-items-center gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+              <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-check-lg"></i>
+                <span>{{ 'Save Changes' if farm else 'Create Farm' }}</span>
+              </button>
+              <a href="{{ url_for('farm.list_farms') }}" class="btn btn-light border">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base_farmer.html' %}
+{% block title %}Vaccination Report{% endblock %}
+{% block page_title %}Immunization Compliance Report{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('report.reports_home') }}">Reports</a></li>
+<li class="breadcrumb-item active">Vaccination Report</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+  <div>
+    <h2 class="h4 fw-bold mb-1" style="color: var(--text-main);">Flock Immunization Report</h2>
+    <p class="text-secondary small mb-0">Audit history of preventative vaccine administrations and upcoming protective schedules.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('report.export_vaccination_csv') }}" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2">
+      <i class="bi bi-download"></i>
+      <span>Export CSV</span>
+    </a>
+    <a href="{{ url_for('report.reports_home') }}" class="btn btn-light border btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+  </div>
+</div>
+
+{% if vaccinations %}
+<!-- Summary Metric Cards -->
+<div class="row g-3 mb-4">
+  {% set completed_count = vaccinations|selectattr('status','equalto','Completed')|list|length %}
+  {% set upcoming_count = vaccinations|selectattr('status','equalto','Upcoming')|list|length %}
+  {% set missed_count = vaccinations|selectattr('status','equalto','Missed')|list|length %}
+  <div class="col-4">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: var(--primary-green);">{{ completed_count }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Completed Doses</div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: #0284C7;">{{ upcoming_count }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Scheduled Upcoming</div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="saas-card text-center p-3">
+      <div class="fw-bold fs-4" style="color: var(--text-main);">{{ vaccinations|length }}</div>
+      <div class="text-secondary text-uppercase" style="font-size: 0.68rem; font-weight: 600;">Total Inoculations</div>
+    </div>
+  </div>
+</div>
+
+<div class="saas-card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table-saas mb-0">
+        <thead>
+          <tr>
+            <th>Vaccine Profile</th>
+            <th>Batch Cohort</th>
+            <th>Administered</th>
+            <th>Next Due Date</th>
+            <th>Dosage</th>
+            <th>Route</th>
+            <th>Status</th>
+            <th>Clinical Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vaccinations %}
+          <tr>
+            <td class="fw-semibold" style="color: var(--text-main);">{{ v.vaccine_name }}</td>
+            <td class="text-secondary small">{{ v.batch.batch_name if v.batch else '—' }}</td>
+            <td class="text-secondary small">{{ v.vaccination_date.strftime('%d %b %Y') if v.vaccination_date else '—' }}</td>
+            <td class="text-secondary small">{{ v.next_vaccination_date.strftime('%d %b %Y') if v.next_vaccination_date else '—' }}</td>
+            <td class="text-secondary small">{{ v.dosage or '—' }}</td>
+            <td class="text-secondary small">{{ v.route or '—' }}</td>
+            <td>
+              {% if v.status == 'Completed' %}
+              <span class="badge-soft-success">{{ v.status }}</span>
+              {% elif v.status == 'Upcoming' %}
+              <span class="badge-soft-info">{{ v.status }}</span>
+              {% else %}
+              <span class="badge-soft-danger">{{ v.status }}</span>
+              {% endif %}
+            </td>
+            <td class="text-secondary small">{{ v.notes[:60] ~ '…' if v.notes and v.notes|length > 60 else (v.notes or '—') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="saas-card text-center py-5 px-4">
+  <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: var(--accent-green); color: var(--primary-green);">
+    <i class="bi bi-shield-check fs-3"></i>
+  </div>
+  <h5 class="fw-bold mb-1" style="color: var(--text-main);">No Vaccination Records Available</h5>
+  <p class="text-secondary small mb-3">Vaccination records will populate this audit report as immunizations are logged.</p>
+  <a href="{{ url_for('vaccination.add_vaccination') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i> Log First Vaccination
+  </a>
+</div>
+{% endif %}
+{% endblock %}

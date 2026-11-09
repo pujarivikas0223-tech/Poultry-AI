@@ -1,0 +1,142 @@
+{% extends 'base_farmer.html' %}
+{% block title %}{{ 'Edit Batch' if batch else 'Add Batch' }}{% endblock %}
+{% block page_title %}{{ 'Edit Batch' if batch else 'Create New Batch' }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('batch.list_batches') }}">Batches</a></li>
+<li class="breadcrumb-item active">{{ 'Edit' if batch else 'Create' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-9 col-xl-8">
+    <div class="saas-card">
+      <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 40px; height: 40px; background-color: var(--accent-green); color: var(--primary-green);">
+            <i class="bi bi-collection fs-5"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">{{ 'Edit Batch: ' ~ batch.batch_name if batch else 'Register New Flock Batch' }}</h5>
+            <p class="text-secondary small mb-0">{{ 'Update cohort details and lifecycle milestones' if batch else 'Add a new poultry flock cohort to your farm records' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('batch.edit_batch', batch_id=batch.id) if batch else url_for('batch.add_batch') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <!-- Farm Selection -->
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Assigned Farm Site <span class="text-danger">*</span></label>
+              <select name="farm_id" class="form-select" required>
+                <option value="">— Select Farm Facility —</option>
+                {% for f in farms %}
+                <option value="{{ f.id }}" {% if batch and batch.farm_id == f.id %}selected{% endif %}>
+                  {{ f.farm_name }} {% if f.location %}({{ f.location }}){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Batch Identifier -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Batch Name / Code <span class="text-danger">*</span></label>
+              <input type="text" name="batch_name" class="form-control"
+                     value="{{ batch.batch_name if batch else '' }}" required placeholder="e.g. Broiler Batch 2024-B1">
+            </div>
+
+            <!-- Breed -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Breed Name <span class="text-danger">*</span></label>
+              <input type="text" name="breed_name" class="form-control"
+                     value="{{ batch.breed_name if batch else '' }}" required placeholder="e.g. Ross 308, Cobb 500, Rhode Island Red">
+            </div>
+
+            <!-- Poultry Type -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Poultry Type <span class="text-danger">*</span></label>
+              <select name="poultry_type" class="form-select" required>
+                {% for pt in poultry_types %}
+                <option value="{{ pt }}" {% if batch and batch.poultry_type == pt %}selected{% endif %}>{{ pt }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Bird Count -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Number of Birds <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-hash"></i></span>
+                <input type="number" name="number_of_birds" class="form-control border-start-0 ps-0"
+                       value="{{ batch.number_of_birds if batch else '' }}" required min="1" placeholder="e.g. 1500">
+              </div>
+            </div>
+
+            <!-- Age & Dates -->
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Current Age (weeks)</label>
+              <input type="number" name="bird_age_weeks" class="form-control"
+                     value="{{ batch.bird_age_weeks if batch else '0' }}" min="0">
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Arrival Date <span class="text-danger">*</span></label>
+              <input type="date" name="arrival_date" class="form-control"
+                     value="{{ batch.arrival_date.strftime('%Y-%m-%d') if batch and batch.arrival_date else '' }}" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Expected Harvest Date</label>
+              <input type="date" name="expected_harvest_date" class="form-control"
+                     value="{{ batch.expected_harvest_date.strftime('%Y-%m-%d') if batch and batch.expected_harvest_date else '' }}">
+            </div>
+
+            <!-- Supplier & Economics -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold small text-secondary">Hatchery / Source Supplier</label>
+              <input type="text" name="source" class="form-control"
+                     value="{{ batch.source if batch else '' }}" placeholder="e.g. Venky's Hatchery Ltd.">
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold small text-secondary">Cost / Bird (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted">₹</span>
+                <input type="number" name="purchase_price_per_bird" class="form-control border-start-0 ps-0"
+                       value="{{ batch.purchase_price_per_bird if batch else '0' }}" min="0" step="0.01">
+              </div>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold small text-secondary">Batch Status</label>
+              <select name="batch_status" class="form-select">
+                {% for st in batch_statuses %}
+                <option value="{{ st }}" {% if batch and batch.batch_status == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-secondary">Batch Notes &amp; Observations</label>
+              <textarea name="notes" class="form-control" rows="3"
+                        placeholder="Vaccination status at arrival, chick initial weight, nursery notes...">{{ batch.notes if batch else '' }}</textarea>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="col-12 d-flex align-items-center gap-2 pt-3 border-top" style="border-color: var(--border-color) !important;">
+              <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-check-lg"></i>
+                <span>{{ 'Save Changes' if batch else 'Create Batch' }}</span>
+              </button>
+              <a href="{{ url_for('batch.list_batches') }}" class="btn btn-light border">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

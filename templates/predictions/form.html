@@ -1,0 +1,149 @@
+{% extends 'base_farmer.html' %}
+{% block title %}AI Disease Prediction{% endblock %}
+{% block page_title %}AI Disease Screening{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('farmer.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('prediction.prediction_history') }}">AI Predictions</a></li>
+<li class="breadcrumb-item active">New Screening</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-9">
+    {% if not models_ready %}
+    <div class="alert alert-warning d-flex align-items-start gap-2 p-3 mb-4 rounded-3 border-0 shadow-sm">
+      <i class="bi bi-exclamation-triangle fs-5 text-warning flex-shrink-0"></i>
+      <div>
+        <span class="fw-bold text-dark">Pre-Trained Machine Learning Models Pending</span>
+        <p class="mb-0 small text-secondary">The XGBoost and Decision Tree models have not been trained yet. Please execute <code>python ml_models/train_models.py</code> in your project console. Submitted parameters will still be archived.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="saas-card">
+      <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: var(--border-color) !important;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 40px; height: 40px; background-color: var(--accent-green); color: var(--primary-green);">
+            <i class="bi bi-cpu fs-5"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0" style="color: var(--text-main);">Flock Disease Screening Diagnostic</h5>
+            <p class="text-secondary small mb-0">Evaluate clinical biomarkers using ensemble Machine Learning algorithms</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('prediction.new_prediction') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Section 1: Batch Selection -->
+          <div class="p-3 rounded-3 mb-4" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">1. Select Flock Batch</h6>
+            <select name="batch_id" id="batchSelect" class="form-select" required onchange="showBatchInfo(this)">
+              <option value="">— Choose a Batch Cohort to Diagnose —</option>
+              {% for b in batches %}
+              <option value="{{ b.id }}"
+                data-birds="{{ b.number_of_birds }}" data-breed="{{ b.breed_name }}"
+                data-type="{{ b.poultry_type }}" data-age="{{ b.bird_age_weeks }}"
+                {% if batch and batch.id == b.id %}selected{% endif %}>
+                {{ b.batch_name }} – {{ b.farm.farm_name if b.farm else 'Unassigned' }} ({{ b.number_of_birds }} birds)
+              </option>
+              {% endfor %}
+            </select>
+
+            <div id="batchInfoBox" class="mt-3 p-3 rounded-3" style="background-color: #FFFFFF; border: 1px solid var(--border-color); display: none;">
+              <div class="row g-2 small text-secondary">
+                <div class="col-4">Breed: <strong class="text-dark" id="bInfoBreed">—</strong></div>
+                <div class="col-4">Poultry Type: <strong class="text-dark" id="bInfoType">—</strong></div>
+                <div class="col-4">Live Birds: <strong class="text-dark" id="bInfoBirds">—</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Clinical Parameters -->
+          <div class="p-3 rounded-3 mb-4" style="background-color: var(--bg-main); border: 1px solid var(--border-color);">
+            <h6 class="text-secondary text-uppercase mb-3" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px;">2. Clinical Biomarkers &amp; Measurements</h6>
+            <div class="row g-3">
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Bird Age (weeks) <span class="text-danger">*</span></label>
+                <input type="number" name="bird_age_weeks" class="form-control" id="bAgeInput"
+                       min="0" required placeholder="e.g. 5">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Body Temp (°C) <span class="text-danger">*</span></label>
+                <input type="number" name="body_temperature" class="form-control" step="0.1"
+                       required placeholder="e.g. 41.5">
+                <div class="form-text text-muted" style="font-size: 0.7rem;">Normal physiological range: 40.5 – 42.0°C</div>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Observed Mortality</label>
+                <input type="number" name="mortality_count" class="form-control" value="0" min="0">
+              </div>
+
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Feed Intake (kg/day)</label>
+                <input type="number" name="feed_consumption_kg" class="form-control" step="0.1" placeholder="e.g. 100">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Water Intake (L/day)</label>
+                <input type="number" name="water_consumption_litres" class="form-control" step="0.1" placeholder="e.g. 200">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label fw-semibold small text-secondary">Avg Bird Weight (kg)</label>
+                <input type="number" name="bird_weight_kg" class="form-control" step="0.01" placeholder="e.g. 1.8">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold small text-secondary">Observed Clinical Symptoms &amp; Behavior</label>
+                <textarea name="symptoms" class="form-control" rows="3"
+                          placeholder="Detail observed abnormalities: coughing, rales, nasal discharge, greenish diarrhea, lethargy, paralysis, sudden mortality..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Advisory Disclaimer -->
+          <div class="p-3 rounded-3 mb-4 d-flex align-items-start gap-2" style="background-color: #FFFBEB; border: 1px solid #FDE68A;">
+            <i class="bi bi-info-circle text-warning fs-5 flex-shrink-0 mt-1"></i>
+            <div class="small" style="color: #92400E;">
+              <strong>Clinical Protocol Notice:</strong> AI prediction serves as an automated preliminary risk screening tool based on algorithmic pattern matching. It does not replace definitive microbiological lab isolation or licensed veterinary diagnosis. Always corroborate results with clinical field exams.
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex align-items-center gap-2 pt-2 border-top" style="border-color: var(--border-color) !important;">
+            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+              <i class="bi bi-cpu"></i>
+              <span>Run AI Disease Diagnosis</span>
+            </button>
+            <a href="{{ url_for('prediction.prediction_history') }}" class="btn btn-light border">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showBatchInfo(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const box = document.getElementById('batchInfoBox');
+  if (opt.value) {
+    document.getElementById('bInfoBreed').textContent = opt.dataset.breed || '—';
+    document.getElementById('bInfoType').textContent = opt.dataset.type || '—';
+    document.getElementById('bInfoBirds').textContent = opt.dataset.birds || '—';
+    if (opt.dataset.age) {
+      document.getElementById('bAgeInput').value = opt.dataset.age;
+    }
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+{% if batch %}
+document.getElementById('batchSelect').value = '{{ batch.id }}';
+showBatchInfo(document.getElementById('batchSelect'));
+{% endif %}
+</script>
+{% endblock %}

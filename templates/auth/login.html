@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In – Poultry Disease Prevention & Biosecurity System</title>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/main.css" />
+
+  <style>
+    body {
+      background-color: var(--bg-main, #F5F8F5);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .auth-card-saas {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color, #E5EDE6);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(22, 101, 52, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      width: 100%;
+      max-width: 440px;
+      overflow: hidden;
+    }
+    .auth-toggle-pill {
+      background-color: var(--bg-main, #F5F8F5);
+      padding: 4px;
+      border-radius: 10px;
+      display: flex;
+      gap: 4px;
+    }
+    .auth-toggle-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary, #64748B);
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .auth-toggle-btn.active {
+      background: #FFFFFF;
+      color: var(--primary-green, #166534);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .form-control:focus {
+      border-color: var(--secondary-green, #22A06B);
+      box-shadow: 0 0 0 3px rgba(34, 160, 107, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 9999; min-width: 360px; max-width: 90%;">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category in ['error', 'danger'] else 'success' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-{{ 'exclamation-circle' if category in ['error', 'danger'] else 'check-circle' }}-fill fs-5"></i>
+            <span class="small">{{ message }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="auth-card-saas">
+    <!-- Header Branding -->
+    <div class="text-center p-4 pb-3">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px; background-color: var(--accent-green, #DCFCE7); color: var(--primary-green, #166534);">
+        <i class="bi bi-shield-check fs-2"></i>
+      </div>
+      <h4 class="fw-bold mb-1" style="color: var(--text-main, #1F2937); letter-spacing: -0.3px;">Poultry Biosecurity</h4>
+      <p class="text-secondary small mb-0">Disease Prevention &amp; Vaccination System</p>
+    </div>
+
+    <div class="p-4 pt-0">
+      <!-- Role Toggle -->
+      <div class="auth-toggle-pill mb-4">
+        <button id="tab-farmer-btn" class="auth-toggle-btn active" type="button" onclick="switchTab('farmer')">
+          <i class="bi bi-person"></i> Farmer Portal
+        </button>
+        <button id="tab-admin-btn" class="auth-toggle-btn" type="button" onclick="switchTab('admin')">
+          <i class="bi bi-shield-lock"></i> Administrator
+        </button>
+      </div>
+
+      <!-- Farmer Sign In Form -->
+      <div id="form-farmer">
+        <form method="POST" action="/login" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="login_type" value="farmer" />
+
+          <div class="mb-3">
+            <label for="farmer-identifier" class="form-label small fw-semibold text-secondary">Email or Phone Number</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="farmer-identifier" name="identifier"
+                     placeholder="name@farm.com or 10-digit mobile" required autocomplete="username" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="farmer-password" class="form-label small fw-semibold text-secondary">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="farmer-password" name="password"
+                     placeholder="Enter your account password" required autocomplete="current-password" />
+              <button class="btn btn-outline-light border border-start-0 text-secondary" type="button" onclick="togglePassword('farmer-password', this)" tabindex="-1">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="form-check mb-0">
+              <input class="form-check-input" type="checkbox" id="farmer-remember" name="remember_me" value="1" />
+              <label class="form-check-label small text-secondary" for="farmer-remember">Remember me</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 d-inline-flex align-items-center justify-content-center gap-2">
+            <span>Sign In to Dashboard</span>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top" style="border-color: var(--border-color, #E5EDE6) !important;">
+          <p class="small text-secondary mb-0">
+            Don't have a producer account?
+            <a href="/register" class="fw-semibold text-decoration-none" style="color: var(--primary-green, #166534);">Create Account</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Admin Sign In Form -->
+      <div id="form-admin" style="display: none;">
+        <form method="POST" action="/login" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="login_type" value="admin" />
+
+          <div class="mb-3">
+            <label for="admin-username" class="form-label small fw-semibold text-secondary">Admin Username or Email</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-shield-person"></i></span>
+              <input type="text" class="form-control border-start-0 ps-0" id="admin-username" name="username"
+                     placeholder="admin@system.local or username" required autocomplete="username" />
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label for="admin-password" class="form-label small fw-semibold text-secondary">Administrator Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-key"></i></span>
+              <input type="password" class="form-control border-start-0 border-end-0 ps-0" id="admin-password" name="password"
+                     placeholder="Enter security key" required autocomplete="current-password" />
+              <button class="btn btn-outline-light border border-start-0 text-secondary" type="button" onclick="togglePassword('admin-password', this)" tabindex="-1">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 d-inline-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-shield-lock"></i>
+            <span>Authenticate as Admin</span>
+          </button>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top" style="border-color: var(--border-color, #E5EDE6) !important;">
+          <p class="small text-secondary mb-0">
+            <i class="bi bi-lock me-1"></i> Restricted to authorized veterinary administrators.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-4">
+    <small class="text-secondary" style="font-size: 0.75rem;">
+      &copy; 2024–2026 Poultry Disease Prevention &amp; Vaccination Management Platform
+    </small>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function switchTab(type) {
+      const farmerForm = document.getElementById('form-farmer');
+      const adminForm  = document.getElementById('form-admin');
+      const farmerBtn  = document.getElementById('tab-farmer-btn');
+      const adminBtn   = document.getElementById('tab-admin-btn');
+
+      if (type === 'farmer') {
+        farmerForm.style.display = 'block';
+        adminForm.style.display  = 'none';
+        farmerBtn.classList.add('active');
+        adminBtn.classList.remove('active');
+      } else {
+        farmerForm.style.display = 'none';
+        adminForm.style.display  = 'block';
+        adminBtn.classList.add('active');
+        farmerBtn.classList.remove('active');
+      }
+    }
+
+    function togglePassword(fieldId, btn) {
+      const field = document.getElementById(fieldId);
+      const icon  = btn.querySelector('i');
+      if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+      } else {
+        field.type = 'password';
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+      }
+    }
+
+    {% if request.form.get('login_type') == 'admin' %}
+      switchTab('admin');
+    {% endif %}
+  </script>
+</body>
+</html>
